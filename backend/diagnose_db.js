@@ -36,12 +36,14 @@ db.serialize(() => {
         const hasPhone = columns.includes('phone');
         const hasFullName = columns.includes('full_name');
         const hasTeacherId = columns.includes('teacher_id');
+        const hasPassword = columns.includes('password');
 
         console.log('Has "phone"?', hasPhone);
         console.log('Has "full_name"?', hasFullName);
         console.log('Has "teacher_id"?', hasTeacherId);
+        console.log('Has "password"?', hasPassword);
 
-        if (!hasPhone || !hasFullName || !hasTeacherId) {
+        if (!hasPhone || !hasFullName || !hasTeacherId || !hasPassword) {
             console.log('\n--- ATTEMPTING MIGRATION ---');
             
             if (!hasPhone) {
@@ -65,6 +67,11 @@ db.serialize(() => {
             if (!hasTeacherId) {
                 db.run("ALTER TABLE users ADD COLUMN teacher_id INTEGER", (e) => {
                     console.log(e ? 'Error adding teacher_id: ' + e.message : 'Successfully added teacher_id column');
+                });
+            }
+            if (!hasPassword) {
+                db.run("ALTER TABLE users ADD COLUMN password TEXT", (e) => {
+                    console.log(e ? 'Error adding password: ' + e.message : 'Successfully added password column');
                 });
             }
         } else {
