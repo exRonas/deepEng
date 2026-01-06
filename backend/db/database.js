@@ -21,17 +21,22 @@ async function initDb() {
     const db = await getDb();
 
     // Reset for Thesis Demo (Optional: remove this in production)
-    await db.exec(`DROP TABLE IF EXISTS exercises`);
-    await db.exec(`DROP TABLE IF EXISTS modules`);
-    await db.exec(`DROP TABLE IF EXISTS progress`);
-    await db.exec(`DROP TABLE IF EXISTS users`);
+    // await db.exec(`DROP TABLE IF EXISTS exercises`);
+    // await db.exec(`DROP TABLE IF EXISTS modules`);
+    // await db.exec(`DROP TABLE IF EXISTS progress`);
+    // await db.exec(`DROP TABLE IF EXISTS users`);
 
     // Users Table
     await db.exec(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
+            username TEXT UNIQUE, -- used for teacher login or student display name
+            phone TEXT UNIQUE,    -- used for student login
+            full_name TEXT,
+            password TEXT,
+            role TEXT DEFAULT 'student', -- 'student' or 'teacher'
             level TEXT DEFAULT 'A1',
+            teacher_id INTEGER, -- For students to link to a teacher
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     `);
@@ -41,10 +46,10 @@ async function initDb() {
         CREATE TABLE IF NOT EXISTS modules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             level TEXT,
-            type TEXT, -- 'grammar', 'vocabulary', 'reading', 'test'
+            type TEXT, -- 'grammar', 'vocabulary', 'reading', 'writing'
             title TEXT,
             description TEXT,
-            content TEXT -- JSON string for theory/reading text
+            content TEXT -- JSON string for theory, ai_task, reflection
         );
     `);
 
@@ -69,115 +74,227 @@ async function initDb() {
             user_id INTEGER,
             module_id INTEGER,
             score INTEGER,
+            reflection TEXT, -- JSON string for reflection answers
             completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id),
             FOREIGN KEY(module_id) REFERENCES modules(id)
         );
     `);
 
-    // Check if we need to seed (checking if modules exist instead of users to be safe)
+    // Assignments Table
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER,
+            module_id INTEGER,
+            assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(teacher_id) REFERENCES users(id),
+            FOREIGN KEY(module_id) REFERENCES modules(id)
+        );
+    `);
+
+    // Dictionary Table
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS dictionary (
+            word TEXT PRIMARY KEY,
+            translation TEXT
+        );
+    `);
+
+    // Check if we need to seed
     const moduleCount = await db.get('SELECT count(*) as count FROM modules');
-    if (moduleCount.count === 0) {
-        console.log('Seeding database with A1 Kids Module...');
+    if (moduleCount.count === 0) { // Only seed if empty
+        console.log('Seeding database with Zakaz Content (Russian Updated)...');
+        // Clear existing for clean seed (Optional, but good for dev)
+        // await db.run('DELETE FROM modules'); 
+        // await db.run('DELETE FROM exercises');
+        // await db.run('DELETE FROM dictionary');
         
-        // Ensure user exists
-        await db.run(`INSERT OR IGNORE INTO users (username, level) VALUES ('student1', 'A1')`);
+        // 1. Create Teacher and Student
+        // Teacher: teacher123 / teacher123
+        await db.run(`INSERT OR IGNORE INTO users (username, role, level, full_name, password) VALUES (?, ?, ?, ?, ?)`, 
+            'teacher123', 'teacher', null, 'Main Teacher', 'teacher123'
+        );
         
-        // --- 1. GRAMMAR MODULE: Verb "to be" ---
-        let res = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
+        // Student: student example
+        await db.run(`INSERT OR IGNORE INTO users (username, phone, role, level, full_name, password, teacher_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+            'student1', '87001234567', 'student', 'A1', 'Student Example', 'password', 1
+        );
+        
+        // --- DICTIONARY SEEDING ---
+        const dictWords = [
+            // Pronouns
+            ['i', 'я'], ['you', 'ты / вы'], ['he', 'он'], ['she', 'она'], ['it', 'оно'], ['we', 'мы'], ['they', 'они'],
+            // To Be
+            ['am', 'есть (для я)'], ['is', 'есть (для он/она/оно)'], ['are', 'есть (для мы/вы/они)'],
+            // Nouns
+            ['student', 'студент / ученик'], ['brother', 'брат'], ['friends', 'друзья'], 
+            ['mother', 'мама'], ['father', 'папа'], ['sister', 'сестра'], ['grandmother', 'бабушка'], ['grandfather', 'дедушка'],
+            ['family', 'семья'], ['members', 'члены'], ['parents', 'родители'],
+            // Common
+            ['what', 'что'], ['where', 'где'], ['who', 'кто'], ['hello', 'привет'], ['goodbye', 'пока'],
+            ['cat', 'кошка'], ['dog', 'собака'], ['house', 'дом'], ['car', 'машина'], ['book', 'книга']
+        ];
+
+        for (const [w, t] of dictWords) {
+            await db.run('INSERT OR REPLACE INTO dictionary (word, translation) VALUES (?, ?)', w, t);
+        }
+
+        // --- 1. GRAMMAR A1: Verb "to be" ---
+        let grammarRes = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
             'A1', 
             'grammar', 
-            'Superheroes: The Verb "to be"', 
-            'Learn how to say who you are!',
+            'Grammar A1: Глагол "to be"', 
+            'Выучи самый главный глагол английского языка!',
             JSON.stringify({
                 theory: [
-                    "We use **am**, **is**, and **are** to say who or what something is.",
-                    "👉 **I am** (I'm) -> I am a student.",
-                    "👉 **He / She / It is** (He's) -> He is my friend.",
-                    "👉 **You / We / They are** (They're) -> We are happy."
+                    "**Что такое глагол TO BE?** Он означает 'быть', 'находиться', 'являться'. В русском языке мы его часто опускаем (например, 'Я студент'), но в английском он обязателен ('I am a student').",
+                    "Три формы в настоящем времени:",
+                    "1. **am** – используется только с 'I' (Я). \nПример: I am a student (Я студент).",
+                    "2. **is** – используется с 'He' (Он), 'She' (Она), 'It' (Оно). \nПример: He is my brother (Он мой брат).",
+                    "3. **are** – используется с 'We' (Мы), 'You' (Ты/Вы), 'They' (Они). \nПример: We are friends (Мы друзья)."
+                ],
+                ai_task: {
+                    prompt: "Нажми 'Talk to AI'. Скажи 3 предложения о себе, используя 'am'. Пример: 'I am a student. I am 12 years old. I am from Kazakhstan.'",
+                    system_message: "You are an English teacher for kids. The student is practicing the verb 'to be'. Check if they use 'am', 'is', 'are' correctly. Speak simply."
+                },
+                reflection: [
+                    "Что было легко?",
+                    "Что показалось сложным?",
+                    "Как ты себя чувствуешь, используя 'to be'?"
                 ]
             })
         );
-        let modId = res.lastID;
+        const grammarId = grammarRes.lastID;
 
         // Exercises for Grammar
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'I ___ a superhero!', JSON.stringify(['is', 'am', 'are']), 'am', 'With "I", we always use "am".'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'She ___ my sister.', JSON.stringify(['am', 'is', 'are']), 'is', 'With "She", we use "is".'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'fill-gap', 'They ___ playing football.', JSON.stringify([]), 'are', 'With "They", we use "are".'
-        );
+        const grammarExercises = [
+            { q: "I ___ from Kazakhstan.", options: ["am", "is", "are", "be"], correct: "am", explanation: "С местоимением 'I' мы всегда используем 'am'." },
+            { q: "My sister ___ 10 years old.", options: ["am", "is", "are", "be"], correct: "is", explanation: "Sister = She (Она). С She мы используем 'is'." },
+            { q: "We ___ students.", options: ["am", "is", "are", "be"], correct: "are", explanation: "С местоимением 'We' (Мы) мы используем 'are'." },
+        ];
 
-        // --- 2. VOCABULARY MODULE: Family & Colors ---
-        res = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
+        for (let ex of grammarExercises) {
+            await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+                grammarId, 'multiple-choice', ex.q, JSON.stringify(ex.options), ex.correct, ex.explanation
+            );
+        }
+
+        // --- 2. VOCABULARY A1: My Family ---
+        let vocabRes = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
             'A1', 
             'vocabulary', 
-            'My Colorful Family', 
-            'Learn words about family and colors.',
+            'Vocabulary A1: Моя Семья', 
+            'Выучи слова о членах семьи.',
             JSON.stringify({
                 theory: [
-                    "👨‍👩‍👧‍👦 **Family Words**:",
-                    "Mother (Mom), Father (Dad), Sister, Brother, Grandmother (Grandma).",
-                    "🎨 **Colors**:",
-                    "Red 🔴, Blue 🔵, Green 🟢, Yellow 🟡."
+                    "**Mother** – мама",
+                    "**Father** – папа",
+                    "**Sister** / **Brother** – сестра / брат",
+                    "**Grandmother** / **Grandfather** – бабушка / дедушка",
+                    "Попробуй назвать своих родных на английском!"
+                ],
+                ai_task: {
+                   prompt: "Расскажи ИИ про свою семью. Скажи: 'This is my mother. Her name is...'",
+                   system_message: "You are a kind teacher. Ask the student about their family names. 'What is your mother's name?'"
+                },
+                reflection: [
+                    "Какие слова ты запомнил?",
+                    "Кого из семьи тебе легче всего назвать?"
                 ]
             })
         );
-        modId = res.lastID;
+        const vocabId = vocabRes.lastID;
 
         // Exercises for Vocabulary
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'What color is the sun? ☀️', JSON.stringify(['Blue', 'Yellow', 'Red']), 'Yellow', 'The sun is usually yellow.'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'matching', 'Father', JSON.stringify(['Dad', 'Mom', 'Sister']), 'Dad', 'Father is also called Dad.'
-        );
+        const vocabExercises = [
+            { q: "My father's father is my ___.", options: ["uncle", "grandfather", "cousin", "brother"], correct: "grandfather", explanation: "Father's father = Grandfather." },
+            { q: "My mother's daughter is my ___.", options: ["aunt", "grandmother", "sister", "mother"], correct: "sister", explanation: "Mother's daughter is your sister (or you!)." }
+        ];
 
-        // --- 3. READING MODULE: My Dog Max ---
-        res = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
+        for (let ex of vocabExercises) {
+            await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+                vocabId, 'multiple-choice', ex.q, JSON.stringify(ex.options), ex.correct, ex.explanation
+            );
+        }
+
+        // --- 3. READING A1: My Family ---
+        let readingRes = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
             'A1', 
             'reading', 
-            'My Dog Max', 
-            'Read a short story about a funny dog.',
+            'Reading A1: Текст "Моя Семья"', 
+            'Прочитай текст про Айсулу и её семью.',
             JSON.stringify({
-                text: "This is Max. Max is my dog. He is big and brown. Max likes to play ball. He is a good boy.",
-                translation: "Это Макс. Макс — моя собака. Он большой и коричневый. Макс любит играть в мяч. Он хороший мальчик."
+                theory: [
+                    "**Стратегии чтения**: Посмотри на картинки, найди знакомые слова, не пытайся перевести каждое слово.",
+                    "**Новые слова**: live (жить), with (с), pet (домашнее животное)."
+                ],
+                text: "Hello! My name is Aisulu. I am 11 years old. I live in Almaty with my family. We are a big family. I have a mother, a father, one brother and one sister. We have a cat named Tom.",
+                translation: "Привет! Меня зовут Айсулу. Мне 11 лет. Я живу в Алматы с семьей...",
+                ai_task: {
+                    prompt: "Нажми 'Talk to AI'. ИИ задаст тебе вопросы по тексту.",
+                    system_message: "You are a tutor. The student has ALREADY answered 'Where does she live?' and 'What is the cat's name?' in the exercises. DO NOT ASK THESE AGAIN. Instead, ask questions about relationships (e.g. 'Is her family big or small?'), logical deduction (e.g. 'How many children are in the family?'), or personal connection (e.g. 'Do you have a cat?'). Start with: 'Is Aisulu's family big?'"
+                },
+                reflection: [
+                    "Сколько ты понял?",
+                    "Что было легко читать?"
+                ]
             })
         );
-        modId = res.lastID;
+        const readingId = readingRes.lastID;
 
-        // Exercises for Reading
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'true-false', 'Max is a cat.', JSON.stringify(['True', 'False']), 'False', 'The text says "Max is my dog".'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'What color is Max?', JSON.stringify(['Black', 'Brown', 'White']), 'Brown', 'The text says "He is big and brown".'
-        );
+        const readingExercises = [
+             { q: "Where does Aisulu live?", options: ["Astana", "Almaty", "Shymkent", "Aktobe"], correct: "Almaty", explanation: "Text says: 'I live in Almaty'" },
+             { q: "What is her pet's name?", options: ["Max", "Tom", "Kitty"], correct: "Tom", explanation: "Text says: 'Its name is Tom'" }
+        ];
 
-        // --- 4. MINI TEST ---
-        res = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
+        for (let ex of readingExercises) {
+            await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+                readingId, 'multiple-choice', ex.q, JSON.stringify(ex.options), ex.correct, ex.explanation
+            );
+        }
+
+        // --- 4. WRITING A1: About Me ---
+        let writingRes = await db.run(`INSERT INTO modules (level, type, title, description, content) VALUES (?, ?, ?, ?, ?)`,
             'A1', 
-            'test', 
-            'Level A1 Final Test', 
-            'Check what you learned!',
-            JSON.stringify({ intro: "Good luck! Try to get 100%." })
+            'writing', 
+            'Writing A1: About Me', 
+            'Learn to write simple sentences about yourself.',
+            JSON.stringify({
+                theory: [
+                    "**Writing Rules**: Start with capital letter. End with a dot (.).",
+                    "**Templates**:",
+                    "My name is ______.",
+                    "I am ______ years old.",
+                    "I am from ______.",
+                    "I have a ______."
+                ],
+                ai_task: {
+                    prompt: "Write 5 sentences about yourself. Click 'Talk to AI' and paste them. AI will check your grammar.",
+                    system_message: "You are a writing tutor. Correct the student's text. If they write 'i from almaty', correct to 'I am from Almaty'. Explain the mistake."
+                },
+                reflection: [
+                    "What was easy?",
+                    "How do you feel about your writing?"
+                ]
+            })
         );
-        modId = res.lastID;
+        const writingId = writingRes.lastID;
 
-        // Test Questions
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'We ___ friends.', JSON.stringify(['am', 'is', 'are']), 'are', 'We + are.'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'fill-gap', 'My mom is happy. ___ is smiling.', JSON.stringify(['He', 'She', 'It']), 'She', 'Mom is a woman, so we use "She".'
-        );
-        await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
-            modId, 'multiple-choice', 'Is it a cat? No, it ___.', JSON.stringify(['is', 'isn\'t', 'aren\'t']), 'isn\'t', 'Negative short answer: No, it isn\'t.'
-        );
+        const writingExercises = [
+            { q: "My ______ is Asel.", options: ["name", "years", "from"], correct: "name", explanation: "My name is..." },
+            { q: "I ______ 12 years old.", options: ["name", "am", "from"], correct: "am", explanation: "I am..." }
+        ];
+
+        for (let ex of writingExercises) {
+            await db.run(`INSERT INTO exercises (module_id, type, question, options, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?)`,
+                writingId, 'multiple-choice', ex.q, JSON.stringify(ex.options), ex.correct, ex.explanation
+            );
+        }
+
+        console.log('Database seeded successfully with Zakaz Content.');
     }
+
 
     console.log('Database initialized.');
 }

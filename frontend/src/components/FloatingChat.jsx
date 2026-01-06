@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { MessageCircle, X, Send, Sparkles, Minimize2 } from 'lucide-react';
+import FormattedText from './FormattedText';
 
 const FloatingChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hello! I am your AI Tutor. Need help with grammar or vocabulary?' }
+    { role: 'assistant', content: 'Привет! Я твой AI репетитор. Нужна помощь с грамматикой или словами?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,9 +29,12 @@ const FloatingChat = () => {
     setLoading(true);
 
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post('/api/chat', {
         messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         userLevel: 'A1'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       setMessages([...newMessages, response.data]);
@@ -99,7 +103,11 @@ const FloatingChat = () => {
                   fontSize: '0.95rem',
                   lineHeight: '1.5'
                 }}>
-                  {msg.content}
+                  {msg.role === 'assistant' ? (
+                     <FormattedText text={msg.content} />
+                  ) : (
+                     msg.content
+                  )}
                 </div>
               </div>
             ))}
@@ -152,6 +160,7 @@ const FloatingChat = () => {
       {/* Toggle Button */}
       {!isOpen && (
         <button 
+          className="floating-chat-btn" 
           onClick={() => setIsOpen(true)}
           style={{ 
             borderRadius: '50px', 

@@ -3,6 +3,9 @@ const cors = require('cors');
 const path = require('path');
 const { initDb } = require('./db/database');
 const apiRoutes = require('./routes/api');
+const authRoutes = require('./routes/auth');
+const profileRoutes = require('./routes/profile');
+const dictionaryRoutes = require('./routes/dictionary');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +17,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/dict', dictionaryRoutes);
 app.use('/api', apiRoutes);
 
 // Serve Frontend Static Files (Production)

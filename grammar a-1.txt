@@ -1,0 +1,178 @@
+ГРАММАТИКА A1. УРОК 1: ГЛАГОЛ TO BE (am, is, are)
+1. MINI-LECTURE (Объяснение)
+Тема: Глагол TO BE в настоящем времени
+Уровень: A1
+Время: 5-7 минут
+
+Что такое глагол TO BE?
+Это самый важный глагол в английском языке. Он означает "быть", "находиться", "являться".
+Три формы в настоящем времени:
+1.	am – я есть (только с I)
+2.	is – он/она/оно есть (с he, she, it, и с одним человеком/предметом)
+3.	are – мы/вы/они есть (с we, you, they, и с несколькими людьми/предметами)
+
+Таблица форм:
+Местоимение	Глагол TO BE	Перевод	Пример
+I	am	Я есть	I am a student.
+He	is	Он есть	He is my brother.
+She	is	Она есть	She is my mother.
+It	is	Он/оно есть	It is a cat.
+We	are	Мы есть	We are friends.
+You	are	Ты/Вы есть	You are a teacher.
+They	are	Они есть	They are my parents.
+
+Когда используем TO BE?
+1.	Представляемся: I am Asel. (Я Асель)
+2.	Говорим о профессии: She is a doctor. (Она врач)
+3.	Описываем: He is tall. (Он высокий)
+4.	Говорим о возрасте: I am 12 years old. (Мне 12 лет)
+5.	Говорим о месте: We are at school. (Мы в школе)
+
+Отрицательная форма:
+Просто добавляем NOT после am/is/are:
+•	I am → I am not (I'm not)
+•	He is → He is not (He isn't / He's not)
+•	They are → They are not (They aren't / They're not)
+Пример: She is not my sister. (Она не моя сестра)
+
+Вопросительная форма:
+Ставим am/is/are В НАЧАЛО предложения:
+•	You are → Are you...?
+•	He is → Is he...?
+•	I am → Am I...?
+Пример: Are you a student? (Ты студент?)
+
+Пометка: Запомни:
+•	I → всегда am
+•	he/she/it → всегда is
+•	you/we/they → всегда are
+Сокращённые формы:
+•	I am = I'm
+•	He is = He's
+•	She is = She's
+•	It is = It's
+•	We are = We're
+•	You are = You're
+•	They are = They're
+Пример: I'm a student. He's my brother.
+Отрицательные сокращения:
+•	is not = isn't
+•	are not = aren't
+•	am not = ❌ (нет сокращения, только "I'm not")
+
+
+2. INTERACTIVE PRACTICE (4 упражнения)
+Exercise 1: Multiple Choice (Выбери правильный вариант)
+1.	I ___ from Kazakhstan.
+a) am ✓
+b) is
+c) are
+d) be
+2.	My sister ___ 10 years old.
+a) am
+b) is ✓
+c) are
+d) be
+3.	We ___ students.
+a) am
+b) is
+c) are ✓
+d) be
+4.	It ___ a big house.
+a) am
+b) is ✓
+c) are
+d) be
+5.	They ___ my friends.
+a) am
+b) is
+c) are ✓
+d) be
+
+Exercise 2: Matching (Сопоставление)
+Сопоставь местоимение с правильной формой глагола:
+Местоимения: I, He, She, It, We, You, They
+Формы глагола:
+•	am → I
+•	is → He, She, It
+•	are → We, You, They
+
+Exercise 3: Fill in the Gaps (Заполни пропуски)
+Вставь am, is или are:
+1.	My name ___ Daniyar. (is)
+2.	I ___ 11 years old. (am)
+3.	My parents ___ teachers. (are)
+4.	She ___ my best friend. (is)
+5.	We ___ from Almaty. (are)
+6.	It ___ a beautiful day. (is)
+7.	You ___ a good student. (are)
+8.	They ___ in the classroom. (are)
+
+Exercise 4: Make Questions (Сделай вопросы)
+Поставь слова в правильном порядке:
+1.	you / Are / a student? → Are you a student?
+2.	she / Is / your sister? → Is she your sister?
+3.	they / Are / at home? → Are they at home?
+4.	he / Is / from Astana? → Is he from Astana?
+5.	it / Is / a dog? → Is it a dog?
+
+3. AI TASK (Диалог с ИИ)
+Задание 1 (для начинающих):
+"Click 'Talk to AI'. Say 3 sentences about yourself using 'am'. Example: 'I am a student. I am 12 years old. I am from Kazakhstan.'"
+Задание 2 (сложнее):
+"Ask AI 3 questions using 'is' or 'are'. Example: 'Are you a teacher? Is English difficult? Are you from England?'"
+Как отвечает ИИ:
+Если ученик пишет: "I am 12. I from Almaty."
+ИИ отвечает:
+"Good start! You used 'am' correctly. One correction: 'I am from Almaty' (don't forget 'am').
+Can you tell me: Are you a boy or a girl?"
+
+Задание 3 (интерактивное):
+"ИИ будет задавать вопросы, а вы отвечайте полными предложениями."
+ИИ: "Hello! Are you a student?"
+Ученик: "Yes, I am a student."
+ИИ: "Is your teacher in the classroom now?"
+Ученик: "Yes, she is in the classroom."
+ИИ: "Are your friends here?"
+Ученик: "Yes, they are here."
+
+4. REFLECTION / FEEDBACK (Рефлексия)
+Вопросы для ученика:
+1.	What was easy? (Что было легко?)
+o	Understanding am/is/are
+o	Making positive sentences
+o	Making negative sentences
+o	Making questions
+o	Talking with AI
+2.	What was difficult? (Что было сложно?)
+o	When to use 'am'
+o	When to use 'is'
+o	When to use 'are'
+o	Making questions
+o	Understanding AI's questions
+3.	Can you use these sentences now? (Можете использовать эти предложения сейчас?)
+o	I am... ✓ / ✗
+o	He is... ✓ / ✗
+o	She is... ✓ / ✗
+o	We are... ✓ / ✗
+o	They are... ✓ / ✗
+o	Are you...? ✓ / ✗
+4.	How do you feel about 'to be'? (Что чувствуете насчёт 'to be'?)
+o	😊 Easy and clear (Легко и понятно)
+o	😐 I need more practice (Нужно больше практики)
+o	😟 Still confusing (Всё ещё сложно)
+5.	Write 2 sentences you will use tomorrow: (Напишите 2 предложения, которые будете использовать завтра)
+1.	________________________________________
+2.	________________________________________
+СИСТЕМА ОЦЕНИВАНИЯ
+Exercise 1-4: 1 балл за каждый правильный ответ (всего 5+4+8+5 = 22 балла)
+AI Task:
+•	Использовал правильные формы: +3 балла
+•	Ответил на вопросы ИИ: +2 балла
+•	Сделал свои вопросы: +2 балла
+Итоговая оценка:
+•	25-30 баллов: Отлично! 👍
+•	20-24 балла: Хорошо! 👌
+•	15-19 баллов: Нужно повторить 📚
+•	Менее 15: Пройдите урок ещё раз 🔄
+

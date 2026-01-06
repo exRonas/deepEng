@@ -5,7 +5,7 @@ module.exports = {
       script: "./backend/server.js",
       env: {
         NODE_ENV: "production",
-        PORT: 3003,
+        PORT: 3004,
         HOST: "0.0.0.0"
       },
       watch: false

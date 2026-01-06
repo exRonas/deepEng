@@ -41,7 +41,10 @@ const PlacementTest = () => {
     });
 
     try {
-      const res = await axios.post('/api/placement-test', { score });
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/placement-test', { score }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setResult(res.data.level);
     } catch (error) {
       console.error(error);
