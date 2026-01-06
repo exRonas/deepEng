@@ -24,6 +24,20 @@ db.serialize(() => {
 
     db.run("BEGIN TRANSACTION");
 
+    // 1. Clean up: Delete modules from DB that are NOT in the JSON file
+    // This ensures the DB strictly mirrors the JSON content.
+    const moduleIds = modules.map(m => m.id);
+    if (moduleIds.length > 0) {
+        const placeholders = moduleIds.map(() => '?').join(',');
+        
+        // Delete related data first (since no ON DELETE CASCADE)
+        db.run(`DELETE FROM exercises WHERE module_id NOT IN (${placeholders})`, moduleIds);
+        db.run(`DELETE FROM progress WHERE module_id NOT IN (${placeholders})`, moduleIds);
+        db.run(`DELETE FROM modules WHERE id NOT IN (${placeholders})`, moduleIds, (err) => {
+            if (!err) console.log('Cleaned up old/deleted modules from database.');
+        });
+    }
+
     modules.forEach(m => {
         // Stringify content back for DB storage
         const contentStr = JSON.stringify(m.content);
