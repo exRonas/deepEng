@@ -75,6 +75,8 @@ async function initDb() {
             module_id INTEGER,
             score INTEGER,
             reflection TEXT, -- JSON string for reflection answers
+            details TEXT,    -- JSON string for detailed answers (e.g. which questions were wrong)
+            ai_history TEXT, -- JSON string for AI chat history
             completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id),
             FOREIGN KEY(module_id) REFERENCES modules(id)
