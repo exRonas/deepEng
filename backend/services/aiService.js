@@ -1,7 +1,7 @@
 const axios = require('axios');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const API_URL = 'https://api.openai.com/v1/chat/completions'; // Switched to OpenAI
 const API_KEY = process.env.DEEPSEEK_API_KEY; // Using the key from env (even if named DEEPSEEK)
 

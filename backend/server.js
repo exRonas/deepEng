@@ -1,12 +1,15 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+// const path = require('path'); // Already imported above
 const { initDb } = require('./db/database');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const dictionaryRoutes = require('./routes/dictionary');
-require('dotenv').config();
+// require('dotenv').config(); // Moved to top
 
 const app = express();
 const PORT = process.env.PORT || 3000;
