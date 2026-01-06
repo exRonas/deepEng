@@ -36,6 +36,8 @@ db.serialize(() => {
 
     db.run("COMMIT", () => {
         console.log('Import complete.');
-        db.close();
+        stmt.finalize(() => {
+            db.close();
+        });
     });
 });
