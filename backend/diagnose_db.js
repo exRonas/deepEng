@@ -45,8 +45,16 @@ db.serialize(() => {
             console.log('\n--- ATTEMPTING MIGRATION ---');
             
             if (!hasPhone) {
-                db.run("ALTER TABLE users ADD COLUMN phone TEXT UNIQUE", (e) => {
-                    console.log(e ? 'Error adding phone: ' + e.message : 'Successfully added phone column');
+                console.log('Adding phone column (step 1/2)...');
+                db.run("ALTER TABLE users ADD COLUMN phone TEXT", (e) => {
+                    if (e) {
+                        console.log('Error adding phone: ' + e.message);
+                    } else {
+                        console.log('Phone column added. Creating UNIQUE index (step 2/2)...');
+                        db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)", (err) => {
+                            console.log(err ? 'Error creating index: ' + err.message : 'Successfully created UNIQUE index on phone');
+                        });
+                    }
                 });
             }
             if (!hasFullName) {
