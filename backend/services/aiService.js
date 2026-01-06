@@ -1,9 +1,8 @@
 const axios = require('axios');
 require('dotenv').config();
 
-// const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
-const API_URL = 'https://api.openai.com/v1/chat/completions'; // Switched to OpenAI
-const API_KEY = process.env.DEEPSEEK_API_KEY; // Using the key from env (even if named DEEPSEEK)
+const API_URL = 'https://api.deepseek.com/chat/completions'; 
+const API_KEY = process.env.DEEPSEEK_API_KEY; 
 
 /**
  * Generates a dynamic system prompt based on user context.
@@ -78,9 +77,9 @@ async function getChatResponse(messages, userLevel, context = {}) {
             content: generateSystemPrompt(userLevel, context)
         };
 
-        // Prepare the payload for OpenAI API
+        // Prepare the payload for DeepSeek API
         const payload = {
-            model: "gpt-4o", // Changed from deepseek-chat to gpt-4o
+            model: "deepseek-chat", 
             messages: [systemMessage, ...messages],
             temperature: 0.7,
             max_tokens: 500, // Limit response length for concise teaching
