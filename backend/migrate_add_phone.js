@@ -34,6 +34,19 @@ db.serialize(() => {
         }
     });
 
+    db.run(`ALTER TABLE users ADD COLUMN teacher_id INTEGER`, (err) => {
+        if (err) {
+             if (err.message.includes('duplicate column name')) {
+                console.log('Column "teacher_id" already exists.');
+            } else {
+                console.error('Error adding teacher_id column:', err.message);
+            }
+        } else {
+            console.log('Successfully added "teacher_id" column.');
+        }
+    });
+
+
 });
 
 db.close(() => {
