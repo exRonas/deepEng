@@ -41,8 +41,8 @@ router.post('/register', async (req, res) => {
         res.json({ token, user: { id: result.lastID, username, role: 'student', full_name: fullName } });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Server error during registration' });
+        console.error("REGISTRATION ERROR:", error);
+        res.status(500).json({ error: 'Server error during registration: ' + error.message });
     }
 });
 
