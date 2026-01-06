@@ -1,0 +1,99 @@
+[
+  {
+    "id": 5,
+    "level": "A1",
+    "type": "grammar",
+    "title": "Grammar A1: Глагол \"to be\"",
+    "description": "Выучи самый главный глагол английского языка!",
+    "content": {
+      "theory": [
+        "**Что такое глагол TO BE?** Он означает 'быть', 'находиться', 'являться'. В русском языке мы его часто опускаем (например, 'Я студент'), но в английском он обязателен ('I am a student').",
+        "Три формы в настоящем времени:",
+        "1. **am** – используется только с 'I' (Я). \nПример: I am a student (Я студент).",
+        "2. **is** – используется с 'He' (Он), 'She' (Она), 'It' (Оно). \nПример: He is my brother (Он мой брат).",
+        "3. **are** – используется с 'We' (Мы), 'You' (Ты/Вы), 'They' (Они). \nПример: We are friends (Мы друзья)."
+      ],
+      "ai_task": {
+        "prompt": "Нажми 'Talk to AI'. Скажи 3 предложения о себе, используя 'am'. Пример: 'I am a student. I am 12 years old. I am from Kazakhstan.'",
+        "system_message": "You are an English teacher for kids. The student is practicing the verb 'to be'. Check if they use 'am', 'is', 'are' correctly. Speak simply."
+      },
+      "reflection": [
+        "Что было легко?",
+        "Что показалось сложным?",
+        "Как ты себя чувствуешь, используя 'to be'?"
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "level": "A1",
+    "type": "vocabulary",
+    "title": "Vocabulary A1: Моя Семья",
+    "description": "Выучи слова о членах семьи.",
+    "content": {
+      "theory": [
+        "**Mother** – мама",
+        "**Father** – папа",
+        "**Sister** / **Brother** – сестра / брат",
+        "**Grandmother** / **Grandfather** – бабушка / дедушка",
+        "Попробуй назвать своих родных на английском!"
+      ],
+      "ai_task": {
+        "prompt": "Расскажи ИИ про свою семью. Скажи: 'This is my mother. Her name is...'",
+        "system_message": "You are a kind teacher. Ask the student about their family names. 'What is your mother's name?'"
+      },
+      "reflection": [
+        "Какие слова ты запомнил?",
+        "Кого из семьи тебе легче всего назвать?"
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "level": "A1",
+    "type": "reading",
+    "title": "Reading A1: Текст \"Моя Семья\"",
+    "description": "Прочитай текст про Айсулу и её семью.",
+    "content": {
+      "theory": [
+        "**Стратегии чтения**: Посмотри на картинки, найди знакомые слова, не пытайся перевести каждое слово.",
+        "**Новые слова**: live (жить), with (с), pet (домашнее животное)."
+      ],
+      "text": "Hello! My name is Aisulu. I am 11 years old. I live in Almaty with my family. We are a big family. I have a mother, a father, one brother and one sister. We have a cat named Tom.",
+      "translation": "Привет! Меня зовут Айсулу. Мне 11 лет. Я живу в Алматы с семьей...",
+      "ai_task": {
+        "prompt": "Нажми Talk to AI. ИИ задаст тебе вопросы по тексту.",
+        "system_message": "You are a tutor. The student has ALREADY answered Where does she live? and What is the cat's name?. DO NOT ASK THESE AGAIN. Ask only about explicitly stated facts (e.g. Is her family big? How many siblings?). DO NOT ask about relationships not mentioned. Start with: Is Aisulu's family big?"
+      },
+      "reflection": [
+        "Сколько ты понял?",
+        "Что было легко читать?"
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "level": "A1",
+    "type": "writing",
+    "title": "Writing A1: About Me",
+    "description": "Learn to write simple sentences about yourself.",
+    "content": {
+      "theory": [
+        "**Writing Rules**: Start with capital letter. End with a dot (.).",
+        "**Templates**:",
+        "My name is ______.",
+        "I am ______ years old.",
+        "I am from ______.",
+        "I have a ______."
+      ],
+      "ai_task": {
+        "prompt": "Write 5 sentences about yourself. Click 'Talk to AI' and paste them. AI will check your grammar.",
+        "system_message": "You are a writing tutor. Correct the student's text. If they write 'i from almaty', correct to 'I am from Almaty'. Explain the mistake."
+      },
+      "reflection": [
+        "What was easy?",
+        "How do you feel about your writing?"
+      ]
+    }
+  }
+]
