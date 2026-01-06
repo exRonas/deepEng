@@ -7,25 +7,46 @@ const outputPath = path.resolve(__dirname, 'content/modules.json');
 
 const db = new sqlite3.Database(dbPath);
 
-db.all("SELECT * FROM modules", (err, rows) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
+async function exportData() {
+    try {
+        const modules = await new Promise((resolve, reject) => {
+            db.all("SELECT * FROM modules", (err, rows) => {
+                if (err) reject(err); else resolve(rows);
+            });
+        });
 
-    // Process rows to parse the 'content' JSON string back into an object so the file is readable
-    const processedRows = rows.map(row => {
-        try {
+        const exercises = await new Promise((resolve, reject) => {
+            db.all("SELECT * FROM exercises", (err, rows) => {
+                if (err) reject(err); else resolve(rows);
+            });
+        });
+
+        // Merge exercises into modules
+        const fullModules = modules.map(m => {
+            const moduleExercises = exercises.filter(e => e.module_id === m.id).map(e => {
+                // Parse options if stored as string, though usually stored as text in DB but handled as array in frontend logic
+                // Check if options is JSON string
+                let opts = e.options;
+                try { opts = JSON.parse(e.options); } catch {}
+                
+                return { ...e, options: opts };
+            });
+
             return {
-                ...row,
-                content: JSON.parse(row.content || '{}')
+                ...m,
+                content: JSON.parse(m.content || '{}'),
+                exercises: moduleExercises
             };
-        } catch (e) {
-            return row;
-        }
-    });
+        });
 
-    fs.writeFileSync(outputPath, JSON.stringify(processedRows, null, 2));
-    console.log(`Successfully exported ${rows.length} modules to ${outputPath}`);
-});
-db.close();
+        fs.writeFileSync(outputPath, JSON.stringify(fullModules, null, 2));
+        console.log(`Successfully exported ${fullModules.length} modules and ${exercises.length} exercises to ${outputPath}`);
+
+    } catch (e) {
+        console.error("Export failed:", e);
+    } finally {
+        db.close();
+    }
+}
+
+exportData();

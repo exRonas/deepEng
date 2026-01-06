@@ -43,8 +43,43 @@ db.serialize(() => {
         const contentStr = JSON.stringify(m.content);
         
         stmt.run(m.id, m.level, m.type, m.title, m.description, contentStr, (err) => {
-            if (err) console.error(`Error importing module ${m.title}:`, err.message);
-            else console.log(`Imported: ${m.title}`);
+            if (err) {
+                console.error(`Error importing module ${m.title}:`, err.message);
+                return;
+            }
+            console.log(`Imported module: ${m.title}`);
+
+            // Handle Link Exercises
+            // 1. Delete existing exercises for this module to ensure clean sync
+            db.run("DELETE FROM exercises WHERE module_id = ?", [m.id], (delErr) => {
+                if (delErr) {
+                    console.error(`Error clearing exercises for module ${m.id}:`, delErr);
+                    return;
+                }
+
+                // 2. Insert new exercises
+                if (m.exercises && Array.isArray(m.exercises) && m.exercises.length > 0) {
+                    const exStmt = db.prepare(`
+                        INSERT INTO exercises (id, module_id, type, question, options, correct_answer, explanation)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    `);
+
+                    m.exercises.forEach(ex => {
+                        // Ensure options is stringified if it's an object/array
+                        let optionsStr = ex.options;
+                        if (typeof optionsStr === 'object') {
+                            optionsStr = JSON.stringify(optionsStr);
+                        }
+
+                        exStmt.run(ex.id, m.id, ex.type, ex.question, optionsStr, ex.correct_answer, ex.explanation, (exErr) => {
+                             if (exErr) console.error(`Error importing exercise ${ex.id} for module ${m.id}:`, exErr.message);
+                        });
+                    });
+                    
+                    exStmt.finalize();
+                    console.log(`  - Synced ${m.exercises.length} exercises for module ${m.id}`);
+                }
+            });
         });
     });
 

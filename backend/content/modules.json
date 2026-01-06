@@ -22,7 +22,51 @@
         "Что показалось сложным?",
         "Как ты себя чувствуешь, используя 'to be'?"
       ]
-    }
+    },
+    "exercises": [
+      {
+        "id": 10,
+        "module_id": 5,
+        "type": "multiple-choice",
+        "question": "I ___ from Kazakhstan.",
+        "options": [
+          "am",
+          "is",
+          "are",
+          "be"
+        ],
+        "correct_answer": "am",
+        "explanation": "С местоимением 'I' мы всегда используем 'am'."
+      },
+      {
+        "id": 11,
+        "module_id": 5,
+        "type": "multiple-choice",
+        "question": "My sister ___ 10 years old.",
+        "options": [
+          "am",
+          "is",
+          "are",
+          "be"
+        ],
+        "correct_answer": "is",
+        "explanation": "Sister = She (Она). С She мы используем 'is'."
+      },
+      {
+        "id": 12,
+        "module_id": 5,
+        "type": "multiple-choice",
+        "question": "We ___ students.",
+        "options": [
+          "am",
+          "is",
+          "are",
+          "be"
+        ],
+        "correct_answer": "are",
+        "explanation": "С местоимением 'We' (Мы) мы используем 'are'."
+      }
+    ]
   },
   {
     "id": 6,
@@ -46,7 +90,37 @@
         "Какие слова ты запомнил?",
         "Кого из семьи тебе легче всего назвать?"
       ]
-    }
+    },
+    "exercises": [
+      {
+        "id": 13,
+        "module_id": 6,
+        "type": "multiple-choice",
+        "question": "My father's father is my ___.",
+        "options": [
+          "uncle",
+          "grandfather",
+          "cousin",
+          "brother"
+        ],
+        "correct_answer": "grandfather",
+        "explanation": "Father's father = Grandfather."
+      },
+      {
+        "id": 14,
+        "module_id": 6,
+        "type": "multiple-choice",
+        "question": "My mother's daughter is my ___.",
+        "options": [
+          "aunt",
+          "grandmother",
+          "sister",
+          "mother"
+        ],
+        "correct_answer": "sister",
+        "explanation": "Mother's daughter is your sister (or you!)."
+      }
+    ]
   },
   {
     "id": 7,
@@ -69,7 +143,36 @@
         "Сколько ты понял?",
         "Что было легко читать?"
       ]
-    }
+    },
+    "exercises": [
+      {
+        "id": 15,
+        "module_id": 7,
+        "type": "multiple-choice",
+        "question": "Where does Aisulu live?",
+        "options": [
+          "Astana",
+          "Almaty",
+          "Shymkent",
+          "Aktobe"
+        ],
+        "correct_answer": "Almaty",
+        "explanation": "Text says: 'I live in Almaty'"
+      },
+      {
+        "id": 16,
+        "module_id": 7,
+        "type": "multiple-choice",
+        "question": "What is her pet's name?",
+        "options": [
+          "Max",
+          "Tom",
+          "Kitty"
+        ],
+        "correct_answer": "Tom",
+        "explanation": "Text says: 'Its name is Tom'"
+      }
+    ]
   },
   {
     "id": 8,
@@ -94,6 +197,34 @@
         "What was easy?",
         "How do you feel about your writing?"
       ]
-    }
+    },
+    "exercises": [
+      {
+        "id": 17,
+        "module_id": 8,
+        "type": "multiple-choice",
+        "question": "My ______ is Asel.",
+        "options": [
+          "name",
+          "years",
+          "from"
+        ],
+        "correct_answer": "name",
+        "explanation": "My name is..."
+      },
+      {
+        "id": 18,
+        "module_id": 8,
+        "type": "multiple-choice",
+        "question": "I ______ 12 years old.",
+        "options": [
+          "name",
+          "am",
+          "from"
+        ],
+        "correct_answer": "am",
+        "explanation": "I am..."
+      }
+    ]
   }
 ]
