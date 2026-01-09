@@ -25,6 +25,9 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/dict', dictionaryRoutes);
 app.use('/api', apiRoutes);
 
+// Serve Pronunciation Files
+app.use('/pronounce', express.static(path.join(__dirname, '../pronounce')));
+
 // Serve Frontend Static Files (Production)
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));

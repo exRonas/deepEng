@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowRight, Sparkles, MessageSquare, Star } from 'lucide-react';
 import InteractiveText from '../components/InteractiveText';
 import FormattedText from '../components/FormattedText';
+import WordWithAudio from '../components/WordWithAudio';
 
 const ModuleViewer = () => {
   const { id } = useParams();
@@ -119,11 +120,28 @@ const ModuleViewer = () => {
       
       {data.theory && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '1.1rem' }}>
-          {data.theory.map((line, idx) => (
-            <div key={idx}>
-               <InteractiveText content={line} />
-            </div>
-          ))}
+          {data.theory.map((line, idx) => {
+             // Check for "1. **word** - translation" pattern
+             const wordMatch = line.match(/^\d+\.\s*\*\*(.+?)\*\*\s*-\s*(.+)$/);
+             if (wordMatch) {
+               const word = wordMatch[1];
+               const translation = wordMatch[2];
+               const cleanWord = word.trim().toLowerCase();
+               const level = module.level ? module.level.toLowerCase() : 'a1';
+               const type = module.type ? module.type.toLowerCase() : 'reading';
+               // Example: /pronounce/a1/reading/pronunciation_en_live.mp3
+               const audioUrl = `/pronounce/${level}/${type}/pronunciation_en_${cleanWord}.mp3`;
+               
+               return (
+                 <WordWithAudio key={idx} word={word} translation={translation} audioUrl={audioUrl} />
+               );
+             }
+             return (
+               <div key={idx}>
+                  <FormattedText text={line} />
+               </div>
+             );
+          })}
         </div>
       )}
 

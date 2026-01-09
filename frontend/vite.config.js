@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     host: true, // Listen on all addresses (0.0.0.0)
     proxy: {
-      '/api': 'http://localhost:3000'
+      '/api': 'http://localhost:3000',
+      '/pronounce': 'http://localhost:3000'
     }
   }
 })
