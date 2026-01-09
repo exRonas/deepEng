@@ -233,7 +233,7 @@ const PlacementTest = () => {
           </div>
           <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Test Complete!</h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem', textAlign: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '1rem', marginBottom: '2rem', textAlign: 'center' }}>
             <div style={{ padding: '1rem', background: '#F3F4F6', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>Vocabulary</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1F2937' }}>{detailedResult.vocab}</div>
