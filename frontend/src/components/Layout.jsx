@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
           <div style={{ width: '28px', height: '28px', background: 'var(--primary)', borderRadius: '6px' }}></div>
           <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)' }}>DeepEng</span>
         </div>
-        <button onClick={toggleMobileMenu} style={{ background: 'transparent', border: 'none', padding: '4px' }}>
+        <button onClick={toggleMobileMenu} style={{ background: 'transparent', border: 'none', padding: '4px', marginRight: '8px' }}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
