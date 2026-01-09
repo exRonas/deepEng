@@ -97,12 +97,15 @@ const PlacementTest = () => {
   const [detailedResult, setDetailedResult] = useState(null);
   const navigate = useNavigate();
 
-  // Initialize random questions on load
+  // Initialize random OPTIONS on load
   React.useEffect(() => {
-    // We want to keep group logic (Vocab, Grammar, Reading) but maybe shuffle within groups or shuffle all?
-    // User asked "4 questions mixed" - assuming shuffle ALL questions for variety
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    setShuffledQuestions(shuffled);
+    // Keep questions order fixed, but shuffle options for each question
+    const processed = questions.map(q => {
+        // Shuffle options
+        const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+        return { ...q, options: shuffledOptions };
+    });
+    setShuffledQuestions(processed);
   }, []);
 
   const handleOptionSelect = (option) => {
