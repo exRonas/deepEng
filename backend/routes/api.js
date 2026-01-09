@@ -60,10 +60,15 @@ router.get('/modules/:id', async (req, res) => {
 // --- Placement Test (Simplified) ---
 router.post('/placement-test', authenticateToken, async (req, res) => {
     const { score } = req.body;
+    // Updated Logic for new 33-question test
+    // 0-8: A1
+    // 9-16: A2
+    // 17-24: B1
+    // 25+: B2
     let level = 'A1';
-    if (score > 8) level = 'B2';
-    else if (score > 5) level = 'B1';
-    else if (score > 2) level = 'A2';
+    if (score >= 25) level = 'B2';
+    else if (score >= 17) level = 'B1';
+    else if (score >= 9) level = 'A2';
 
     // Update user level
     try {
