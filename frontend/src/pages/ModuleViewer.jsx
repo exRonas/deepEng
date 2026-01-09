@@ -124,8 +124,16 @@ const ModuleViewer = () => {
              // 1. Handle Table Object
              if (typeof line === 'object' && line.type === 'table') {
                  return (
-                     <div key={idx} style={{ overflowX: 'auto', margin: '0.5rem 0', borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '350px', background: 'white' }}>
+                     <div key={idx} style={{ 
+                         overflowX: 'auto', 
+                         margin: '0.5rem 0', 
+                         borderRadius: '8px', 
+                         border: '1px solid var(--border-light)', 
+                         boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                         maxWidth: '100%',
+                         width: '100%'
+                     }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px', background: 'white' }}>
                             <thead>
                                 <tr style={{ background: '#F9FAFB' }}>
                                     {line.headers.map((h, i) => (
