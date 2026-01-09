@@ -126,15 +126,20 @@ const ModuleViewer = () => {
              if (wordMatch) {
                const word = wordMatch[1];
                const translation = wordMatch[2];
-               const cleanWord = word.trim().toLowerCase();
-               const level = module.level ? module.level.toLowerCase() : 'a1';
-               const type = module.type ? module.type.toLowerCase() : 'reading';
-               // Example: /pronounce/a1/reading/pronunciation_en_live.mp3
-               const audioUrl = `/pronounce/${level}/${type}/pronunciation_en_${cleanWord}.mp3`;
                
-               return (
-                 <WordWithAudio key={idx} word={word} translation={translation} audioUrl={audioUrl} />
-               );
+               // Only treat as vocabulary if the word contains Latin characters (English)
+               // This avoids showing audio buttons for "Strategies" like "1. **Смотри** - ..."
+               if (/[a-zA-Z]/.test(word)) {
+                   const cleanWord = word.trim().toLowerCase();
+                   const level = module.level ? module.level.toLowerCase() : 'a1';
+                   const type = module.type ? module.type.toLowerCase() : 'reading';
+                   // Example: /pronounce/a1/reading/pronunciation_en_live.mp3
+                   const audioUrl = `/pronounce/${level}/${type}/pronunciation_en_${cleanWord}.mp3`;
+                   
+                   return (
+                     <WordWithAudio key={idx} word={word} translation={translation} audioUrl={audioUrl} />
+                   );
+               }
              }
              return (
                <div key={idx}>
@@ -146,13 +151,20 @@ const ModuleViewer = () => {
       )}
 
       {data.text && (
-        <div style={{ background: '#EFF6FF', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
+        <div style={{ background: '#EFF6FF', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem', marginTop: '3rem' }}>
+          {data.image && (
+              <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                  <img 
+                    src={data.image} 
+                    alt="Illustration" 
+                    style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '300px', objectFit: 'cover' }}
+                  />
+              </div>
+          )}
           <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
              <InteractiveText content={data.text} />
           </p>
-          {data.translation && (
-             <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Перевод: {data.translation}</p>
-          )}
+          {/* Translation removed as requested */}
         </div>
       )}
 
