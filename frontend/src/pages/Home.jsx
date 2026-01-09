@@ -13,9 +13,10 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
+        // Ensure we send the token to get filtered modules
         const headers = { Authorization: `Bearer ${token}` };
 
-        const modulesRes = await axios.get('/api/modules'); // Not protected, but okay
+        const modulesRes = await axios.get('/api/modules', { headers }); 
         setModules(modulesRes.data);
         
         const userRes = await axios.get('/api/user/progress', { headers });

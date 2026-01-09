@@ -31,9 +31,44 @@ router.post('/chat', authenticateToken, async (req, res) => {
 });
 
 // --- Modules ---
+// Updated to filter by assignments if user is student
 router.get('/modules', async (req, res) => {
     try {
         const db = await getDb();
+        
+        // Check if user is authenticated via header (manual check since this route was public)
+        const authHeader = req.headers['authorization'];
+        if (authHeader) {
+            const token = authHeader.split(' ')[1];
+            const jwt = require('jsonwebtoken'); // Assuming this is available or I need to import it
+            const { JWT_SECRET } = require('../middleware/auth');
+            
+            try {
+                const user = jwt.verify(token, JWT_SECRET);
+                
+                // If user is a student, only show assigned modules
+                if (user.role === 'student') {
+                    // Logic: Get modules that are in 'assignments' table.
+                    // Assuming student is seeing assignments from ANY teacher (global class)
+                    // Or if we linked student to teacher, we'd filter by that.
+                    // For now, let's show modules that exist in 'assignments' table (meaning "Open" status).
+                    
+                    const modules = await db.all(`
+                        SELECT m.* 
+                        FROM modules m
+                        JOIN assignments a ON m.id = a.module_id
+                        GROUP BY m.id -- Avoid duplicates if assigned by multiple teachers
+                    `);
+                    return res.json(modules);
+                }
+            } catch (e) {
+                // Token invalid or ignore
+            }
+        }
+
+        // Default behavior (Teacher or Public or Guests?): Show all modules
+        // If we want strict "Student sees nothing unless logged in", we should enforce auth.
+        // But for TeacherDashboard, we need ALL modules.
         const modules = await db.all('SELECT * FROM modules');
         res.json(modules);
     } catch (err) {
@@ -197,15 +232,33 @@ router.get('/profile/teacher/dashboard', authenticateToken, async (req, res) => 
     }
 });
 
-// --- Assignments ---
+// --- Assignments (Open/Close Modules) ---
+
+// Assign (Open) a module
 router.post('/assignments', authenticateToken, async (req, res) => {
     const { moduleId } = req.body;
     const teacherId = req.user.id;
 
     try {
         const db = await getDb();
-        await db.run('INSERT INTO assignments (teacher_id, module_id) VALUES (?, ?)', teacherId, moduleId);
-        res.json({ success: true });
+        // Insert with IGNORE or simple insert (since we have UNIQUE index now, it will fail if exists or we can ignore)
+        // Using INSERT OR IGNORE to be safe and idempotent
+        await db.run('INSERT OR IGNORE INTO assignments (teacher_id, module_id) VALUES (?, ?)', teacherId, moduleId);
+        res.json({ success: true, message: 'Module opened successfully' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Unassign (Close) a module
+router.delete('/assignments', authenticateToken, async (req, res) => {
+    const { moduleId } = req.body;
+    const teacherId = req.user.id;
+
+    try {
+        const db = await getDb();
+        await db.run('DELETE FROM assignments WHERE teacher_id = ? AND module_id = ?', teacherId, moduleId);
+        res.json({ success: true, message: 'Module closed successfully' });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

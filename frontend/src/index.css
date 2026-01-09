@@ -163,3 +163,18 @@ p { margin: 0 0 1rem 0; color: var(--text-muted); }
     grid-template-columns: 1fr;
   }
 }
+
+.input-group-responsive {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: row;
+}
+
+@media (max-width: 600px) {
+  .input-group-responsive {
+    flex-direction: column;
+  }
+  .input-group-responsive button {
+    width: 100%;
+  }
+}

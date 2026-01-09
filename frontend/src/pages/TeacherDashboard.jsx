@@ -5,10 +5,11 @@ import FormattedText from '../components/FormattedText';
 
 const TeacherDashboard = () => {
   const [students, setStudents] = useState([]);
-  const [modules, setModules] = useState([]);
+  const [modules, setModules] = useState([]); // All available modules in system
+  const [assignedModules, setAssignedModules] = useState([]); // Modules currently open (assigned)
   const [stats, setStats] = useState({ totalStudents: 0, avgScore: 0 });
   const [loading, setLoading] = useState(true);
-  const [selectedModule, setSelectedModule] = useState('');
+  const [selectedModuleToOpen, setSelectedModuleToOpen] = useState('');
   const [inviteLink, setInviteLink] = useState('');
 
   // Drill-down State
@@ -27,14 +28,16 @@ const TeacherDashboard = () => {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
         
-        const [dashRes, modRes] = await Promise.all([
+        const [dashRes, modRes, assignRes] = await Promise.all([
              axios.get('/api/profile/teacher/dashboard', { headers }),
-             axios.get('/api/modules')
+             axios.get('/api/modules'),
+             axios.get('/api/assignments', { headers })
         ]);
 
         setStudents(dashRes.data.students);
         setStats(dashRes.data.stats);
         setModules(modRes.data);
+        setAssignedModules(assignRes.data);
         setInviteLink(`${window.location.origin}/register`);
 
       } catch (error) {
@@ -45,6 +48,17 @@ const TeacherDashboard = () => {
     };
     fetchData();
   }, []);
+
+  const refreshAssignments = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('/api/assignments', { headers: { Authorization: `Bearer ${token}` } });
+        setAssignedModules(res.data);
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
 
   const fetchStudentHistory = async (student) => {
       setSelectedStudent(student);
@@ -102,17 +116,32 @@ const TeacherDashboard = () => {
     window.location.href = '/login';
   };
 
-  const handleAssignModule = async () => {
-      if(!selectedModule) return;
+  const handleOpenModule = async () => {
+      if(!selectedModuleToOpen) return;
       try {
           const token = localStorage.getItem('token');
-          await axios.post('/api/assignments', { moduleId: selectedModule }, {
+          await axios.post('/api/assignments', { moduleId: selectedModuleToOpen }, {
               headers: { Authorization: `Bearer ${token}` }
           });
-          alert('Module assigned successfully to the class!');
-          setSelectedModule('');
+          // alert('Module opened successfully for the class!');
+          setSelectedModuleToOpen('');
+          refreshAssignments();
       } catch(e) {
-          alert('Failed to assign module');
+          alert('Failed to open module');
+      }
+  };
+
+  const handleCloseModule = async (moduleId) => {
+      if(!window.confirm("Are you sure you want to close this module? Students will lose access.")) return;
+      try {
+          const token = localStorage.getItem('token');
+          await axios.delete('/api/assignments', {
+              headers: { Authorization: `Bearer ${token}` },
+              data: { moduleId }
+          });
+          refreshAssignments();
+      } catch(e) {
+          alert('Failed to close module');
       }
   };
 
@@ -241,25 +270,75 @@ const TeacherDashboard = () => {
 
             {/* Assignment Tool - Only show if no interaction or kept at bottom */}
             {!selectedProgress && (
-                <div className="card">
-                    <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
-                        <BookOpen size={20} color="var(--primary)"/> Assign Module
-                    </h3>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <select 
-                        className="input-field" 
-                        value={selectedModule} 
-                        onChange={(e) => setSelectedModule(e.target.value)}
-                        >
-                        <option value="">Select Module...</option>
-                        {modules.map(m => (
-                            <option key={m.id} value={m.id}>{m.title} ({m.type})</option>
-                        ))}
-                        </select>
-                        <button className="btn btn-primary" onClick={handleAssignModule} disabled={!selectedModule}>
-                            <Plus size={20} />
-                        </button>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '2rem'}}>
+                    
+                    {/* Open Module (Assign) */}
+                    <div className="card">
+                        <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
+                            <BookOpen size={20} color="var(--primary)"/> Open Module (Unlock)
+                        </h3>
+                        <p style={{marginBottom: '1rem', color: '#666', fontSize: '0.9rem'}}>Select a module to unlock for all students in your class.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <select 
+                            className="input-field" 
+                            value={selectedModuleToOpen} 
+                            onChange={(e) => setSelectedModuleToOpen(e.target.value)}
+                            style={{ flex: 1 }}
+                            >
+                            <option value="">Select Module to Open...</option>
+                            {modules
+                                .filter(m => !assignedModules.some(am => am.module_id === m.id))
+                                .map(m => (
+                                <option key={m.id} value={m.id}>{m.title} ({m.type} - {m.level})</option>
+                            ))}
+                            </select>
+                            <button className="btn btn-primary" onClick={handleOpenModule} disabled={!selectedModuleToOpen}>
+                                <Plus size={20} /> Open
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Assigned Modules (Close/Lock) */}
+                     <div className="card">
+                        <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
+                            <CheckCircle size={20} color="var(--secondary)"/> Open Modules
+                        </h3>
+                         {assignedModules.length === 0 ? <p style={{color: '#666'}}>No modules are currently open.</p> : (
+                             <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                                 {assignedModules.map(am => (
+                                     <div key={am.id} style={{
+                                         padding: '0.75rem', 
+                                         border: '1px solid #eee', 
+                                         borderRadius: '8px',
+                                         display: 'flex',
+                                         justifyContent: 'space-between',
+                                         alignItems: 'center',
+                                         background: '#F0FDF4'
+                                     }}>
+                                         <div>
+                                            <div style={{fontWeight: 'bold'}}>{am.title}</div>
+                                            <div style={{fontSize: '0.8rem', color: '#666'}}>{am.type} • {am.level} • Opened on {new Date(am.assigned_at).toLocaleDateString()}</div>
+                                         </div>
+                                         <button 
+                                            onClick={() => handleCloseModule(am.module_id)}
+                                            style={{
+                                                background: '#FEF2F2', 
+                                                color: '#EF4444', 
+                                                border: '1px solid #FECACA',
+                                                borderRadius: '6px',
+                                                padding: '0.25rem 0.5rem',
+                                                cursor: 'pointer',
+                                                fontSize: '0.85rem'
+                                            }}
+                                         >
+                                             Close (Lock)
+                                         </button>
+                                     </div>
+                                 ))}
+                             </div>
+                         )}
+                    </div>
+
                 </div>
             )}
             

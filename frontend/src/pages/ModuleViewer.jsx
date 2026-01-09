@@ -17,6 +17,7 @@ const ModuleViewer = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [reflectionAnswers, setReflectionAnswers] = useState({});
   const [aiScore, setAiScore] = useState(0); // Score from AI task (0-100)
+  const [textInput, setTextInput] = useState('');
 
   // --- Inline AI Task State ---
   const [aiTaskMessages, setAiTaskMessages] = useState([]);
@@ -54,7 +55,18 @@ const ModuleViewer = () => {
 
   const handleExerciseAnswer = (answer) => {
     const ex = currentStep.data;
-    const isCorrect = answer.toLowerCase().trim() === ex.correct_answer.toLowerCase().trim();
+    let isCorrect = false;
+
+    // Normalize: remove trailing dot and trim
+    const normAnswer = answer ? answer.replace(/\.$/, '').trim() : '';
+    const normCorrect = ex.correct_answer ? ex.correct_answer.replace(/\.$/, '').trim() : '';
+
+    // Check if question implies strict case (e.g., "Correct the mistake")
+    if (ex.question && ex.question.toLowerCase().includes('correct')) {
+        isCorrect = normAnswer === normCorrect;
+    } else {
+        isCorrect = normAnswer.toLowerCase() === normCorrect.toLowerCase();
+    }
     
     setAnswers({ ...answers, [ex.id]: answer });
     setShowFeedback({
@@ -66,6 +78,7 @@ const ModuleViewer = () => {
   const nextStep = () => {
     setShowFeedback(null);
     setAiHelp('');
+    setTextInput('');
     // Do NOT reset AI chat state just for navigation, so users can go back and forth
     // setIsAiChatStarted(false); 
     // setAiTaskMessages([]);
@@ -81,6 +94,7 @@ const ModuleViewer = () => {
   const prevStep = () => {
     setShowFeedback(null);
     setAiHelp('');
+    setTextInput('');
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1);
     }
@@ -222,7 +236,27 @@ const ModuleViewer = () => {
     </div>
   );
 
-  const renderExercise = (ex) => (
+  const renderExercise = (ex) => {
+    // Helper to determine if stored answer is correct (revalidating if showFeedback is null)
+    const storedAnswer = answers[ex.id];
+    let isStoredCorrect = false;
+
+    if (storedAnswer) {
+        // Normalize: remove trailing dot and trim
+        const normAnswer = storedAnswer.replace(/\.$/, '').trim();
+        const normCorrect = ex.correct_answer ? ex.correct_answer.replace(/\.$/, '').trim() : '';
+
+        if (ex.question && ex.question.toLowerCase().includes('correct')) {
+            isStoredCorrect = (normAnswer === normCorrect);
+        } else {
+             isStoredCorrect = (normAnswer.toLowerCase() === normCorrect.toLowerCase());
+        }
+    }
+    
+    // If showFeedback is present (just answered), use it. Otherwise use recalculated.
+    const effectiveIsCorrect = showFeedback ? showFeedback.isCorrect : isStoredCorrect;
+
+    return (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <span className="badge badge-blue">Вопрос</span>
@@ -245,6 +279,47 @@ const ModuleViewer = () => {
       {loadingAi && <div style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>Думаю...</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {ex.type === 'text-input' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="input-group-responsive">
+                    <input
+                        type="text"
+                        value={answers[ex.id] ? answers[ex.id] : textInput}
+                        onChange={(e) => !answers[ex.id] && setTextInput(e.target.value)}
+                        disabled={!!answers[ex.id]}
+                        placeholder="Type your answer..."
+                        style={{
+                            flex: 1,
+                            padding: '1rem',
+                            fontSize: '1.1rem',
+                            borderRadius: '8px',
+                            border: '1px solid ' + (answers[ex.id] ? (effectiveIsCorrect ? 'var(--secondary)' : '#EF4444') : 'var(--border-light)'),
+                            background: answers[ex.id] ? (effectiveIsCorrect ? '#D1FAE5' : '#FEE2E2') : 'white'
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && textInput.trim() && !answers[ex.id]) {
+                                handleExerciseAnswer(textInput);
+                            }
+                        }}
+                    />
+                    {!answers[ex.id] && (
+                         <button 
+                            className="btn btn-primary"
+                            disabled={!textInput.trim()}
+                            onClick={() => handleExerciseAnswer(textInput)}
+                         >
+                            Check
+                         </button>
+                    )}
+                </div>
+                {answers[ex.id] && !effectiveIsCorrect && (
+                    <div style={{color: '#EF4444', marginTop: '0.5rem', padding: '0.5rem', background: '#FEF2F2', borderRadius: '4px'}}>
+                        Correct answer: <strong>{ex.correct_answer}</strong>
+                    </div>
+                )}
+            </div>
+        )}
+
         {(ex.type === 'multiple-choice' || ex.type === 'true-false') && (
            ex.options.map(opt => {
             const isSelected = answers[ex.id] === opt;
@@ -399,6 +474,7 @@ const ModuleViewer = () => {
 
     </div>
   );
+  };
 
   const handleAiTaskSendMessage = async (task) => {
     if (!aiTaskInput.trim()) return;
