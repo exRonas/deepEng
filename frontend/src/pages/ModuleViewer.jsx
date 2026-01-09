@@ -129,10 +129,14 @@ const ModuleViewer = () => {
                
                // Only treat as vocabulary if the word contains Latin characters (English)
                // This avoids showing audio buttons for "Strategies" like "1. **Смотри** - ..."
-               if (/[a-zA-Z]/.test(word)) {
+               // Also check if audio is available for this module type
+               const level = module.level ? module.level.toLowerCase() : 'a1';
+               const type = module.type ? module.type.toLowerCase() : 'reading';
+               // Available audio folders: a1/reading, a1/vocabulary
+               const isAudioAvailable = (level === 'a1' && (type === 'reading' || type === 'vocabulary'));
+
+               if (/[a-zA-Z]/.test(word) && isAudioAvailable) {
                    const cleanWord = word.trim().toLowerCase();
-                   const level = module.level ? module.level.toLowerCase() : 'a1';
-                   const type = module.type ? module.type.toLowerCase() : 'reading';
                    // Example: /pronounce/a1/reading/pronunciation_en_live.mp3
                    const audioUrl = `/pronounce/${level}/${type}/pronunciation_en_${cleanWord}.mp3`;
                    
