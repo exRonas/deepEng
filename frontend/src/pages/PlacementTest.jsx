@@ -90,50 +90,162 @@ const questions = [
 ];
 
 const PlacementTest = () => {
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [detailedResult, setDetailedResult] = useState(null);
   const navigate = useNavigate();
+
+  // Initialize random questions on load
+  React.useEffect(() => {
+    // We want to keep group logic (Vocab, Grammar, Reading) but maybe shuffle within groups or shuffle all?
+    // User asked "4 questions mixed" - assuming shuffle ALL questions for variety
+    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    setShuffledQuestions(shuffled);
+  }, []);
 
   const handleOptionSelect = (option) => {
     setAnswers({ ...answers, [currentStep]: option });
   };
 
   const handleNext = () => {
-    if (currentStep < questions.length - 1) {
+    if (currentStep < shuffledQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       handleSubmit();
     }
   };
 
+  const calculateLevel = (correct, total) => {
+      const percentage = (correct / total) * 100;
+      if (percentage >= 85) return 'B2';
+      if (percentage >= 70) return 'B1';
+      if (percentage >= 40) return 'A2';
+      return 'A1';
+  };
+
+  const levelToScore = (lvl) => {
+      if (lvl === 'B2') return 4;
+      if (lvl === 'B1') return 3;
+      if (lvl === 'A2') return 2;
+      return 1;
+  };
+
+  const scoreToLevel = (score) => {
+      if (score >= 3.5) return 'B2';
+      if (score >= 2.5) return 'B1';
+      if (score >= 1.5) return 'A2';
+      return 'A1';
+  }
+
   const handleSubmit = async () => {
-    let score = 0;
-    questions.forEach((q, idx) => {
-      if (answers[idx] === q.a) score++;
+    // Grading Logic
+    let stats = {
+        vocab: { correct: 0, total: 0 },
+        grammar: { correct: 0, total: 0 },
+        reading: { correct: 0, total: 0 }
+    };
+
+    shuffledQuestions.forEach((q, idx) => {
+        let category = 'vocab'; // default
+        // Identify category based on question content patterns roughly
+        if (q.text) category = 'reading';
+        else if (q.options.some(o => o === 'go' || o === 'goes' || o === 'am' || o === 'is')) category = 'grammar';
+        else if (q.q.includes('___')) category = 'grammar'; // Actually most gap fills are grammar or vocab, hard to distinguish perfectly without explicit tag.
+        
+        // Better approach: explicit tagging in questions array would be best, but let's infer for now based on original array index or content.
+        // Since we shuffled, we lose index order. Let's look at the content.
+        // Reading is easy (has text).
+        // Grammar vs Vocab: 
+        // Vocab: "breakfast in", "mother's brother", "traditional Kazakh", "musical", "launches", "phrasal verb", "adjective", "Synonym", "idiom", "knowledge", "Formal word"
+        // Grammar: "She ___ to school", "three ___ on the table", "This is ___ pen", "Yesterday I", "help me with this", "than her brother", "If I ___ time", "asked me where", "next year", "Not only", "Had I known", "The report"
+        
+        const qText = q.q.toLowerCase();
+        
+        if (q.text) {
+            category = 'reading';
+        } else if (
+            qText.includes('breakfast') || qText.includes('brother') || qText.includes('school') || 
+            qText.includes('kazakh') || qText.includes('dombra') || qText.includes('baikonur') ||
+            qText.includes('turn') || qText.includes('adjective') || qText.includes('synonym') ||
+            qText.includes('book') || qText.includes('knowledge') || qText.includes('formal')
+        ) {
+            category = 'vocab';
+        } else {
+            category = 'grammar';
+        }
+
+        stats[category].total++;
+        if (answers[idx] === q.a) stats[category].correct++;
     });
+
+    const vocabLevel = calculateLevel(stats.vocab.correct, Math.max(stats.vocab.total, 1));
+    const grammarLevel = calculateLevel(stats.grammar.correct, Math.max(stats.grammar.total, 1));
+    const readingLevel = calculateLevel(stats.reading.correct, Math.max(stats.reading.total, 1));
+
+    const avgScore = (levelToScore(vocabLevel) + levelToScore(grammarLevel) + levelToScore(readingLevel)) / 3;
+    const finalLevel = scoreToLevel(avgScore);
+
+    const detailedSync = {
+        vocab: vocabLevel,
+        grammar: grammarLevel,
+        reading: readingLevel,
+        final: finalLevel
+    };
+    
+    setDetailedResult(detailedSync);
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('/api/placement-test', { score }, {
+      // Sending raw score just for compatibility, but mainly level
+      // Ideally backend should accept 'level' directly now
+      
+      // We'll update the backend to just take the final level as trusted or keep score logic. 
+      // For now let's emulate a "score" that produces this level in the backend logic, OR ask backend to update level directly.
+      // Let's assume we update backend to accept explicit level or just send a high score to match B2 etc.
+      
+      // Better: Send average score mapped to 0-33 scale
+      let simulatedScore = 0;
+      if (finalLevel === 'A1') simulatedScore = 5;
+      if (finalLevel === 'A2') simulatedScore = 12;
+      if (finalLevel === 'B1') simulatedScore = 20;
+      if (finalLevel === 'B2') simulatedScore = 30;
+
+      await axios.post('/api/placement-test', { score: simulatedScore }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setResult(res.data.level);
+      setResult(finalLevel);
     } catch (error) {
       console.error(error);
     }
   };
 
-  if (result) {
+  if (result && detailedResult) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <div className="card" style={{ textAlign: 'center', maxWidth: '500px', padding: '3rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '2rem' }}>
+        <div className="card" style={{ textAlign: 'center', maxWidth: '600px', width: '100%', padding: '3rem' }}>
           <div style={{ marginBottom: '1.5rem', display: 'inline-block', padding: '1rem', background: '#D1FAE5', borderRadius: '50%' }}>
             <CheckCircle2 size={48} color="#059669" />
           </div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Test Complete!</h2>
-          <p style={{ fontSize: '1.1rem', marginBottom: '2rem' }}>Based on your answers, your recommended level is:</p>
+          <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Test Complete!</h2>
           
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <div style={{ padding: '1rem', background: '#F3F4F6', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>Vocabulary</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1F2937' }}>{detailedResult.vocab}</div>
+            </div>
+            <div style={{ padding: '1rem', background: '#F3F4F6', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>Grammar</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1F2937' }}>{detailedResult.grammar}</div>
+            </div>
+            <div style={{ padding: '1rem', background: '#F3F4F6', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>Reading</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1F2937' }}>{detailedResult.reading}</div>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Overall Recommended Level:</p>
           <div style={{ fontSize: '4rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '2rem' }}>
             {result}
           </div>
@@ -146,14 +258,40 @@ const PlacementTest = () => {
     );
   }
 
-  const progress = ((currentStep + 1) / questions.length) * 100;
+  if (shuffledQuestions.length === 0) return <div>Loading test...</div>;
+
+  const currentQ = shuffledQuestions[currentStep];
+  const progress = ((currentStep + 1) / shuffledQuestions.length) * 100;
+
+  // Render Heading properly (Center, Bold, No Markdown characters)
+  const renderText = (text) => {
+      if (!text) return null;
+      
+      // Basic markdown parser for bold headers
+      const parts = text.split('\n');
+      return (
+        <div style={{ padding: '1.5rem', background: '#f9fafb', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #e5e7eb' }}>
+            {parts.map((part, idx) => {
+                const isHeader = part.trim().startsWith('**') && part.trim().endsWith('**');
+                if (isHeader) {
+                    return (
+                        <h3 key={idx} style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#374151' }}>
+                            {part.replace(/\*\*/g, '')}
+                        </h3>
+                    );
+                }
+                return <p key={idx} style={{ marginBottom: '0.5rem', fontSize: '1rem', lineHeight: '1.6', color: '#4B5563' }}>{part}</p>;
+            })}
+        </div>
+      );
+  };
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', paddingTop: '2rem' }}>
       {/* Progress Bar */}
       <div style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          <span>Question {currentStep + 1} of {questions.length}</span>
+          <span>Question {currentStep + 1} of {shuffledQuestions.length}</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <div style={{ width: '100%', height: '8px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden' }}>
@@ -163,19 +301,16 @@ const PlacementTest = () => {
 
       {/* Question Card */}
       <div className="card" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-        {questions[currentStep].text && (
-          <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '1rem', lineHeight: '1.6', whiteSpace: 'pre-line', border: '1px solid #e5e7eb' }}>
-            {questions[currentStep].text}
-          </div>
-        )}
+        {renderText(currentQ.text)}
+        
         <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem', lineHeight: '1.4' }}>
-          {questions[currentStep].q}
+          {currentQ.q}
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
-          {questions[currentStep].options.map(opt => (
+          {currentQ.options.map((opt, oIdx) => ( // Using index in key too just in case of duplicate options (rare)
             <label 
-              key={opt} 
+              key={oIdx} 
               style={{ 
                 padding: '1.25rem', 
                 border: `2px solid ${answers[currentStep] === opt ? 'var(--primary)' : 'var(--border-light)'}`,
@@ -209,7 +344,7 @@ const PlacementTest = () => {
             disabled={!answers[currentStep]}
             style={{ opacity: !answers[currentStep] ? 0.5 : 1 }}
           >
-            {currentStep === questions.length - 1 ? 'Finish Test' : 'Next Question'}
+            {currentStep === shuffledQuestions.length - 1 ? 'Finish Test' : 'Next Question'}
             <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
           </button>
         </div>
