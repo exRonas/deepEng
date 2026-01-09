@@ -121,6 +121,35 @@ const ModuleViewer = () => {
       {data.theory && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '1.1rem' }}>
           {data.theory.map((line, idx) => {
+             // 1. Handle Table Object
+             if (typeof line === 'object' && line.type === 'table') {
+                 return (
+                     <div key={idx} style={{ overflowX: 'auto', margin: '0.5rem 0', borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '350px', background: 'white' }}>
+                            <thead>
+                                <tr style={{ background: '#F9FAFB' }}>
+                                    {line.headers.map((h, i) => (
+                                        <th key={i} style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid var(--border-light)', fontSize: '0.9rem', color: '#4B5563', fontWeight: '600' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {line.rows.map((row, rIdx) => (
+                                    <tr key={rIdx} style={{ borderBottom: rIdx === line.rows.length - 1 ? 'none' : '1px solid #E5E7EB' }}>
+                                        {row.map((cell, cIdx) => (
+                                            <td key={cIdx} style={{ padding: '0.75rem', fontSize: '0.95rem', color: '#1F2937' }}>{cell}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                     </div>
+                 );
+             }
+
+             // 2. Handle Text (String)
+             if (typeof line !== 'string') return null;
+
              // Check for "1. **word** - translation" pattern
              const wordMatch = line.match(/^\d+\.\s*\*\*(.+?)\*\*\s*-\s*(.+)$/);
              if (wordMatch) {
