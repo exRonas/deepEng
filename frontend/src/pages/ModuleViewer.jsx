@@ -278,7 +278,21 @@ const ModuleViewer = () => {
                            background: isSelected ? (isCorrect ? '#D1FAE5' : '#FEE2E2') : 'white',
                            borderColor: isSelected ? (isCorrect ? 'var(--secondary)' : '#EF4444') : 'var(--border-light)',
                            opacity: (answers[ex.id] && !isSelected) ? 0.6 : 1,
-                           cursor: (showFeedback || answers[ex.id]) ? 'default' : 'pointer'
+                           cursor: (showFeedback || answers[ex.id]) ? 'default' : 'pointer',
+                           
+                           // Enhanced Styling
+                           padding: '0.75rem 1.5rem',
+                           borderRadius: '12px',
+                           fontSize: '1.1rem',
+                           fontWeight: '600',
+                           boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                           borderWidth: '2px',
+                           transition: 'all 0.2s ease',
+                           minWidth: '100px',
+                           color: isSelected ? (isCorrect ? '#065F46' : '#991B1B') : 'var(--text-main)',
+                           display: 'flex',
+                           justifyContent: 'center',
+                           alignItems: 'center'
                        }}
                     >
                        {opt}
