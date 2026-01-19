@@ -36,11 +36,11 @@ router.get('/modules', async (req, res) => {
     try {
         const db = await getDb();
         
-        // Check if user is authenticated via header (manual check since this route was public)
+        // Check if user is authenticated via header
         const authHeader = req.headers['authorization'];
         if (authHeader) {
             const token = authHeader.split(' ')[1];
-            const jwt = require('jsonwebtoken'); // Assuming this is available or I need to import it
+            const jwt = require('jsonwebtoken');
             const { JWT_SECRET } = require('../middleware/auth');
             
             try {
@@ -49,28 +49,34 @@ router.get('/modules', async (req, res) => {
                 // If user is a student, only show assigned modules
                 if (user.role === 'student') {
                     // Logic: Get modules that are in 'assignments' table.
-                    // Assuming student is seeing assignments from ANY teacher (global class)
-                    // Or if we linked student to teacher, we'd filter by that.
-                    // For now, let's show modules that exist in 'assignments' table (meaning "Open" status).
-                    
                     const modules = await db.all(`
                         SELECT m.* 
                         FROM modules m
                         JOIN assignments a ON m.id = a.module_id
-                        GROUP BY m.id -- Avoid duplicates if assigned by multiple teachers
+                        GROUP BY m.id
                     `);
                     return res.json(modules);
                 }
+                
+                // If user is a teacher, show all modules
+                if (user.role === 'teacher') {
+                     const modules = await db.all('SELECT * FROM modules');
+                     return res.json(modules);
+                }
+
             } catch (e) {
-                // Token invalid or ignore
+                // Token invalid
+                return res.status(401).json({ error: 'Invalid token' });
             }
         }
 
-        // Default behavior (Teacher or Public or Guests?): Show all modules
-        // If we want strict "Student sees nothing unless logged in", we should enforce auth.
-        // But for TeacherDashboard, we need ALL modules.
-        const modules = await db.all('SELECT * FROM modules');
-        res.json(modules);
+        // If no auth header or other cases, do not return modules basically
+        // Or if you want to support guest access, you can allow it here.
+        // But the user requested "initially created module should be closed".
+        // The only way it was "open" is if it fell through here.
+        // So we return empty or 401.
+        return res.status(401).json({ error: 'Access denied' });
+
     } catch (err) {
         console.error("GET /modules error:", err);
         res.status(500).json({ error: "Failed to fetch modules", details: err.message });

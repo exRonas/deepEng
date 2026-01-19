@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Volume2 } from 'lucide-react';
 
-const WordWithAudio = ({ word, translation, audioUrl }) => {
+const WordWithAudio = ({ word, translation, audioUrl, definition }) => {
     const [isPlaying, setIsPlaying] = useState(false);
 
     const playAudio = () => {
@@ -55,6 +55,18 @@ const WordWithAudio = ({ word, translation, audioUrl }) => {
             <div style={{ fontSize: '1.1rem' }}>
                 <strong>{word}</strong> <span style={{ color: '#6B7280' }}>— {translation}</span>
             </div>
+
+            {definition && (
+                <div style={{ 
+                    color: '#6B7280', 
+                    fontStyle: 'italic', 
+                    borderLeft: '1px solid #BAE6FD', 
+                    paddingLeft: '1rem',
+                    marginLeft: '0.5rem'
+                }}>
+                    {definition}
+                </div>
+            )}
         </div>
     );
 };

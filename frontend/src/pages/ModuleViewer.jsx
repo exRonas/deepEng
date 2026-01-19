@@ -169,7 +169,20 @@ const ModuleViewer = () => {
                  );
              }
 
-             // 2. Handle Text (String)
+             // 2. Handle Vocabulary Word Object
+             if (typeof line === 'object' && line.type === 'vocabulary-word') {
+                 return (
+                     <WordWithAudio 
+                        key={idx}
+                        word={line.word} 
+                        translation={line.translation} 
+                        audioUrl={line.audio || null}  
+                        definition={line.definition}
+                     />
+                 );
+             }
+
+             // 3. Handle Text (String)
              if (typeof line !== 'string') return null;
 
              // Check for "1. **word** - translation" pattern

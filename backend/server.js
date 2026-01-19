@@ -9,6 +9,8 @@ const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const dictionaryRoutes = require('./routes/dictionary');
+const editorRoutes = require('./routes/editor');
+const uploadRoutes = require('./routes/upload');
 // require('dotenv').config(); // Moved to top
 
 const app = express();
@@ -23,6 +25,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dict', dictionaryRoutes);
+app.use('/api/editor', editorRoutes, uploadRoutes); // Mount upload under editor
 app.use('/api', apiRoutes);
 
 // Serve Pronunciation Files

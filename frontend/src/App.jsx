@@ -5,6 +5,7 @@ import FloatingChat from './components/FloatingChat';
 import Home from './pages/Home';
 import PlacementTest from './pages/PlacementTest';
 import ModuleViewer from './pages/ModuleViewer';
+import ModuleEditor from './pages/ModuleEditor';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -47,6 +48,18 @@ function App() {
           <Route path="/module/:id" element={
             <ProtectedRoute>
               <ModuleViewer />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/editor/new" element={
+            <ProtectedRoute role="teacher">
+              <ModuleEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/editor/:id" element={
+            <ProtectedRoute role="teacher">
+              <ModuleEditor />
             </ProtectedRoute>
           } />
 

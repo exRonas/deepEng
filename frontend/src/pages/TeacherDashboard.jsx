@@ -30,7 +30,7 @@ const TeacherDashboard = () => {
         
         const [dashRes, modRes, assignRes] = await Promise.all([
              axios.get('/api/profile/teacher/dashboard', { headers }),
-             axios.get('/api/modules'),
+             axios.get('/api/modules', { headers }),
              axios.get('/api/assignments', { headers })
         ]);
 
@@ -295,6 +295,39 @@ const TeacherDashboard = () => {
                             <button className="btn btn-primary" onClick={handleOpenModule} disabled={!selectedModuleToOpen}>
                                 <Plus size={20} /> Open
                             </button>
+                        </div>
+                    </div>
+
+
+                    {/* Content Management */}
+                    <div className="card">
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                            <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                                <FileText size={20} color="var(--primary)"/> Course Content
+                            </h3>
+                            <button 
+                                onClick={() => window.location.href='/editor/new'} 
+                                className="btn btn-primary"
+                                style={{fontSize: '0.8rem', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center'}}
+                            >
+                                <Plus size={16} style={{marginRight: '4px'}}/> Create New
+                            </button>
+                        </div>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {modules.map(m => (
+                                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', borderBottom: '1px solid #eee' }}>
+                                    <div>
+                                        <div style={{fontWeight: '500', fontSize: '0.9rem'}}>{m.title}</div>
+                                        <div style={{fontSize: '0.8rem', color: '#666'}}>{m.type.toUpperCase()} • {m.level}</div>
+                                    </div>
+                                    <button 
+                                        onClick={() => window.location.href=`/editor/${m.id}`}
+                                        style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
