@@ -6,6 +6,319 @@ import InteractiveText from '../components/InteractiveText';
 import FormattedText from '../components/FormattedText';
 import WordWithAudio from '../components/WordWithAudio';
 
+const MatchingGame = ({ ex, onComplete, isReadOnly }) => {
+    const [leftItems, setLeftItems] = useState([]);
+    const [rightItems, setRightItems] = useState([]);
+    
+    // Line Drawing State
+    const [lines, setLines] = useState([]); // Array of { startId, endId, isCorrect }
+    const [currentLine, setCurrentLine] = useState(null); // { startX, startY, endX, endY }
+    const [activePoint, setActivePoint] = useState(null); // { id, side, x, y } (start point of drag)
+    
+    // Refs for elements to calculate positions
+    const containerRef = React.useRef(null);
+    const itemRefs = React.useRef({}); // { id: element }
+
+    useEffect(() => {
+        if (!ex.options || !Array.isArray(ex.options) || ex.options.length === 0 || typeof ex.options[0] !== 'object') return;
+
+        const pairs = ex.options; 
+        const l = pairs.map(p => ({ text: p.left, id: `left-${p.left}` }));
+        const r = pairs.map(p => ({ text: p.right, id: `right-${p.right}`, matchId: `left-${p.left}` }));
+        
+        if (leftItems.length === 0) {
+            setLeftItems([...l].sort(() => Math.random() - 0.5));
+            setRightItems([...r].sort(() => Math.random() - 0.5));
+        }
+        
+    }, [ex]);
+
+    // Initialize lines from isReadOnly state if needed
+    useEffect(() => {
+        if (isReadOnly && ex.options) {
+             // Reconstruct lines for completed state
+             const allLines = ex.options.map(p => ({
+                 startId: `left-${p.left}`,
+                 endId: `right-${p.right}`,
+                 isCorrect: true
+             }));
+             setLines(allLines);
+        }
+    }, [isReadOnly, ex]);
+
+
+    const getPointPosition = (id, side) => {
+        const el = itemRefs.current[id];
+        if (!el || !containerRef.current) return { x: 0, y: 0 };
+        
+        const rect = el.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        // Anchor points: Sides of text boxes
+        const x = side === 'left' 
+            ? (rect.right - containerRect.left) 
+            : (rect.left - containerRect.left);
+        const y = (rect.top - containerRect.top) + (rect.height / 2);
+        
+        return { x, y };
+    };
+
+    const handleStart = (e, item, side) => {
+        if (isReadOnly) return;
+        // Don't allow starting from an already matched item
+        if (lines.some(l => (side === 'left' ? l.startId === item.id : l.endId === item.id))) return;
+
+        // Prevent scrolling while dragging on touch devices
+        // if (e.type === 'touchstart') e.preventDefault(); 
+        
+        const pos = getPointPosition(item.id, side);
+        
+        setActivePoint({ id: item.id, side, ...pos });
+        setCurrentLine({ startX: pos.x, startY: pos.y, endX: pos.x, endY: pos.y });
+    };
+
+    const handleMove = (e) => {
+        if (!activePoint || !containerRef.current) return;
+        
+        // Prevent default only for mouse events to avoid passive listener warnings on touch
+        // We rely on css touch-action: none for touch devices
+        if (!e.type.includes('touch') && e.cancelable) {
+            e.preventDefault();
+        }
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        let clientX, clientY;
+
+        if (e.changedTouches) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
+        const mouseX = clientX - containerRect.left;
+        const mouseY = clientY - containerRect.top;
+        
+        setCurrentLine(prev => ({ ...prev, endX: mouseX, endY: mouseY }));
+    };
+
+    // Generic match checker
+    const checkMatch = (targetId, targetSide) => {
+        if (!activePoint) return;
+
+        // Must connect Left <-> Right
+        if (activePoint.side === targetSide) {
+             setActivePoint(null);
+             setCurrentLine(null);
+             return;
+        }
+        
+        const startId = activePoint.side === 'left' ? activePoint.id : targetId;
+        const endId = activePoint.side === 'left' ? targetId : activePoint.id;
+        
+        // Check correctness
+        const rightItemObj = rightItems.find(r => r.id === endId);
+        const isCorrect = rightItemObj && rightItemObj.matchId === startId;
+        
+        if (isCorrect) {
+            const newLine = { startId, endId, isCorrect: true };
+            const newLines = [...lines, newLine];
+            setLines(newLines);
+            
+            if (newLines.length === ex.options.length) {
+                onComplete("Completed");
+            }
+        } else {
+             const wrongLine = { startId, endId, isCorrect: false };
+             setLines(prev => [...prev, wrongLine]);
+             setTimeout(() => {
+                 setLines(prev => prev.filter(l => l !== wrongLine));
+             }, 500);
+        }
+        
+        setActivePoint(null);
+        setCurrentLine(null);
+    };
+
+    const handleMouseUp = () => {
+        if (activePoint) {
+            setActivePoint(null);
+            setCurrentLine(null);
+        }
+    };
+
+    const handleItemMouseUp = (e, targetItem, targetSide) => {
+        e.stopPropagation(); // Prevent bubbling to container
+        if (!activePoint || isReadOnly) return;
+        checkMatch(targetItem.id, targetSide);
+    };
+
+    const handleTouchEnd = (e) => {
+        if (!activePoint) return;
+        
+        const touch = e.changedTouches[0];
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        // Traverse up to find the data-match-id
+        const itemBox = targetEl?.closest('[data-match-id]');
+        
+        if (itemBox) {
+            const targetId = itemBox.getAttribute('data-match-id');
+            const targetSide = itemBox.getAttribute('data-match-side');
+            checkMatch(targetId, targetSide);
+        } else {
+            setActivePoint(null);
+            setCurrentLine(null);
+        }
+    };
+
+    // Calculate lines coords for rendering
+    const renderLines = () => {
+        const rendered = lines.map((line, i) => {
+            const startPos = getPointPosition(line.startId, 'left');
+            const endPos = getPointPosition(line.endId, 'right');
+            if (startPos.x === 0 && startPos.y === 0) return null;
+
+            return (
+                <line 
+                    key={i} 
+                    x1={startPos.x} y1={startPos.y} 
+                    x2={endPos.x} y2={endPos.y} 
+                    stroke={line.isCorrect ? "#10B981" : "#EF4444"} 
+                    strokeWidth="4" 
+                    strokeLinecap="round"
+                />
+            );
+        });
+
+        if (currentLine) {
+            rendered.push(
+                <line 
+                    key="dragging" 
+                    x1={currentLine.startX} y1={currentLine.startY} 
+                    x2={currentLine.endX} y2={currentLine.endY} 
+                    stroke="#3B82F6" 
+                    strokeWidth="4" 
+                    strokeLinecap="round"
+                    strokeDasharray="5,5"
+                />
+            );
+        }
+        return rendered;
+    };
+    
+    const [_, setForceUpdate] = useState(0);
+    useEffect(() => {
+        const handleResize = () => setForceUpdate(s => s + 1);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+        setTimeout(() => setForceUpdate(s => s + 1), 100);
+    }, [leftItems]);
+
+    return (
+        <div 
+            ref={containerRef}
+            style={{ position: 'relative', margin: '2rem 0', minHeight: '300px', userSelect: 'none', touchAction: 'none' }}
+            onMouseMove={handleMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchMove={handleMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+        >
+             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+                 {renderLines()}
+             </svg>
+             
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem' }}>
+                 {/* Left Column */}
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                     {leftItems.map(item => {
+                         const isConnected = lines.some(l => l.startId === item.id && l.isCorrect);
+                         return (
+                             <div 
+                                key={item.id}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'relative' }}
+                             >
+                                 <div 
+                                    ref={el => itemRefs.current[item.id] = el}
+                                    onMouseDown={(e) => handleStart(e, item, 'left')}
+                                    onMouseUp={(e) => handleItemMouseUp(e, item, 'left')}
+                                    onTouchStart={(e) => handleStart(e, item, 'left')}
+                                    // Add data attributes for touch detection
+                                    data-match-id={item.id}
+                                    data-match-side="left"
+                                    style={{ 
+                                        padding: '1rem', 
+                                        border: `2px solid ${isConnected ? '#10B981' : '#E5E7EB'}`, 
+                                        borderRadius: '8px',
+                                        background: isConnected ? '#ECFDF5' : 'white',
+                                        width: '100%',
+                                        textAlign: 'center',
+                                        zIndex: 20,
+                                        cursor: isReadOnly || isConnected ? 'default' : 'pointer',
+                                        transition: 'all 0.2s',
+                                        transform: activePoint?.id === item.id ? 'scale(1.02)' : 'scale(1)',
+                                        boxShadow: activePoint?.id === item.id ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                                    }}
+                                 >
+                                     {item.text}
+                                 </div>
+                             </div>
+                         );
+                     })}
+                 </div>
+
+                 {/* Right Column */}
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      {rightItems.map(item => {
+                         const isConnected = lines.some(l => l.endId === item.id && l.isCorrect);
+                         return (
+                             <div 
+                                key={item.id}
+                                style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+                             >
+                                 <div 
+                                    ref={el => itemRefs.current[item.id] = el}
+                                    onMouseDown={(e) => handleStart(e, item, 'right')}
+                                    onMouseUp={(e) => handleItemMouseUp(e, item, 'right')}
+                                    onTouchStart={(e) => handleStart(e, item, 'right')}
+                                    // Add data attributes for touch detection
+                                    data-match-id={item.id}
+                                    data-match-side="right"
+                                    style={{ 
+                                        padding: '1rem', 
+                                        border: `2px solid ${isConnected ? '#10B981' : '#E5E7EB'}`, 
+                                        borderRadius: '8px',
+                                        background: isConnected ? '#ECFDF5' : 'white',
+                                        width: '100%',
+                                        textAlign: 'center',
+                                        zIndex: 20,
+                                        cursor: isReadOnly || isConnected ? 'default' : 'pointer',
+                                        transition: 'all 0.2s',
+                                        transform: activePoint?.id === item.id ? 'scale(1.02)' : 'scale(1)',
+                                        boxShadow: activePoint?.id === item.id ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                                    }}
+                                 >
+                                     {item.text}
+                                 </div>
+                             </div>
+                         );
+                     })}
+                 </div>
+             </div>
+             
+             <div style={{ textAlign: 'center', marginTop: '2rem', color: '#6B7280', fontSize: '0.9rem' }}>
+                Drag a line from a box on the left to a box on the right!
+             </div>
+        </div>
+    );
+};
+
 const ModuleViewer = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,6 +351,56 @@ const ModuleViewer = () => {
     fetchModule();
   }, [id]);
 
+  // Update global context for FloatingChat
+  useEffect(() => {
+    if (!module) return;
+
+    const content = JSON.parse(module.content || '{}');
+    const exercises = module.exercises || [];
+    
+    // Reconstruct steps locally for the effect
+    const localSteps = [];
+    if (content.theory || content.text) localSteps.push({ type: 'theory', data: content });
+    exercises.forEach(ex => localSteps.push({ type: 'exercise', data: ex }));
+    if (content.ai_task) localSteps.push({ type: 'ai_task', data: content.ai_task });
+    if (content.reflection) localSteps.push({ type: 'reflection', data: content.reflection });
+
+    if (!localSteps[currentStepIndex]) return;
+
+    const currentStep = localSteps[currentStepIndex];
+    let contextData = {
+        moduleId: module.id,
+        moduleTitle: module.title,
+        stepType: currentStep.type
+    };
+
+    if (currentStep.type === 'exercise') {
+        const ex = currentStep.data;
+        contextData.exerciseType = ex.type;
+        contextData.question = ex.question;
+        
+        if (ex.type === 'matching') {
+            contextData.matchingPairs = ex.options; 
+            contextData.instruction = "The user is solving a Matching game. They need to connect items from the left column to the right column. Only hint, do not give full answers.";
+        } else {
+             if (ex.options) contextData.options = ex.options;
+             if (ex.text) contextData.text = ex.text;
+             contextData.correctAnswer = ex.correct_answer;
+        }
+    } else if (currentStep.type === 'theory') {
+        contextData.content = content.theory || content.text;
+        contextData.instruction = "The user is reading theory material.";
+    } else if (currentStep.type === 'ai_task') {
+        contextData.prompt = content.ai_task.prompt;
+    }
+
+    window.currentDeepEngContext = contextData;
+
+    return () => {
+        window.currentDeepEngContext = null;
+    };
+  }, [currentStepIndex, module]);
+
   if (!module) return <div className="container">Loading...</div>;
 
   const content = JSON.parse(module.content || '{}');
@@ -57,15 +420,19 @@ const ModuleViewer = () => {
     const ex = currentStep.data;
     let isCorrect = false;
 
-    // Normalize: remove trailing dot and trim
-    const normAnswer = answer ? answer.replace(/\.$/, '').trim() : '';
-    const normCorrect = ex.correct_answer ? ex.correct_answer.replace(/\.$/, '').trim() : '';
-
-    // Check if question implies strict case (e.g., "Correct the mistake")
-    if (ex.question && ex.question.toLowerCase().includes('correct')) {
-        isCorrect = normAnswer === normCorrect;
+    if (ex.type === 'matching') {
+        isCorrect = true; // Validated by loop
     } else {
-        isCorrect = normAnswer.toLowerCase() === normCorrect.toLowerCase();
+        // Normalize: remove trailing dot and trim
+        const normAnswer = answer ? answer.replace(/\.$/, '').trim() : '';
+        const normCorrect = ex.correct_answer ? ex.correct_answer.replace(/\.$/, '').trim() : '';
+
+        // Check if question implies strict case (e.g., "Correct the mistake")
+        if (ex.question && ex.question.toLowerCase().includes('correct')) {
+            isCorrect = normAnswer === normCorrect;
+        } else {
+            isCorrect = normAnswer.toLowerCase() === normCorrect.toLowerCase();
+        }
     }
     
     setAnswers({ ...answers, [ex.id]: answer });
@@ -365,29 +732,11 @@ const ModuleViewer = () => {
         )}
 
         {ex.type === 'matching' && (
-           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              {ex.options.map(opt => {
-                 const isSelected = answers[ex.id] === opt;
-                 const isCorrect = isSelected
-                    ? (showFeedback ? showFeedback.isCorrect : (opt.toLowerCase().trim() === ex.correct_answer.toLowerCase().trim()))
-                    : false;
-
-                 return (
-                 <button 
-                    key={opt}
-                    onClick={() => !showFeedback && !answers[ex.id] && handleExerciseAnswer(opt)}
-                    className="btn-outline"
-                    style={{ 
-                        background: isSelected ? (isCorrect ? '#D1FAE5' : '#FEE2E2') : 'white',
-                        borderColor: isSelected ? (isCorrect ? 'var(--secondary)' : '#EF4444') : 'var(--border-light)',
-                        opacity: (answers[ex.id] && !isSelected) ? 0.6 : 1,
-                        cursor: (showFeedback || answers[ex.id]) ? 'default' : 'pointer'
-                    }}
-                  >
-                    {opt}
-                 </button>
-              )})}
-           </div>
+           <MatchingGame 
+             ex={ex} 
+             onComplete={handleExerciseAnswer} 
+             isReadOnly={!!(showFeedback || answers[ex.id])}
+           />
         )}
 
         {ex.type === 'fill-gap' && (
@@ -456,7 +805,16 @@ const ModuleViewer = () => {
         <div style={{ marginTop: '2rem', animation: 'fadeIn 0.3s' }}>
           {/* Re-calculate or use showFeedback for visual state */}
           {(() => {
-              const isCorrect = showFeedback ? showFeedback.isCorrect : (answers[ex.id]?.toLowerCase().trim() === ex.correct_answer.toLowerCase().trim());
+              let isCorrect = false;
+              if (showFeedback) {
+                  isCorrect = showFeedback.isCorrect;
+              } else if (ex.type === 'matching' && answers[ex.id]) {
+                  // Matching is always correct if completed (it forces correctness)
+                  isCorrect = true;
+              } else {
+                  isCorrect = (answers[ex.id]?.toLowerCase().trim() === ex.correct_answer?.toLowerCase().trim());
+              }
+
               return (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: isCorrect ? 'var(--secondary)' : '#EF4444', fontWeight: 'bold' }}>
@@ -540,8 +898,13 @@ const ModuleViewer = () => {
         if (totalExercises > 0) {
             module.exercises.forEach(ex => {
                 const userAns = answers[ex.id];
-                if (userAns && userAns.toLowerCase().trim() === ex.correct_answer.toLowerCase().trim()) {
-                    correctCount++;
+                if (userAns) {
+                    if (ex.type === 'matching') {
+                        // Matching is forced correct by UI
+                        correctCount++;
+                    } else if (userAns.toLowerCase().trim() === ex.correct_answer?.toLowerCase().trim()) {
+                        correctCount++;
+                    }
                 }
             });
         }

@@ -32,7 +32,8 @@ const FloatingChat = () => {
       const token = localStorage.getItem('token');
       const response = await axios.post('/api/chat', {
         messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        userLevel: 'A1'
+        userLevel: 'A1',
+        context: window.currentDeepEngContext || {}
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

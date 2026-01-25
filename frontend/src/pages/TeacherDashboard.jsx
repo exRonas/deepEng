@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Copy, Plus, BookOpen, X, MessageSquare, CheckCircle, FileText } from 'lucide-react';
+import { Copy, Plus, BookOpen, X, MessageSquare, CheckCircle, FileText, Trash2 } from 'lucide-react';
 import FormattedText from '../components/FormattedText';
 
 const TeacherDashboard = () => {
@@ -111,6 +111,26 @@ const TeacherDashboard = () => {
     }
   };
 
+  const handleDeleteStudent = async (studentId, e) => {
+    e.stopPropagation(); // Prevent row click
+    if (!window.confirm("Are you sure you want to remove this student? This action cannot be undone.")) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`/api/profile/teacher/student/${studentId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Remove from local state
+        setStudents(prev => prev.filter(s => s.id !== studentId));
+        setStats(prev => ({ ...prev, totalStudents: prev.totalStudents - 1 }));
+        
+    } catch (e) {
+        alert('Failed to delete student');
+        console.error(e);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = '/login';
@@ -191,6 +211,7 @@ const TeacherDashboard = () => {
                     <th style={{ padding: '1rem' }}>Avg Score</th>
                     <th style={{ padding: '1rem' }}>Last Activity</th>
                     <th style={{ padding: '1rem' }}>Status</th>
+                    <th style={{ padding: '1rem' }}>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -218,9 +239,29 @@ const TeacherDashboard = () => {
                         <td style={{ padding: '1rem' }}>
                         {s.progress > 50 ? '🟢 On Track' : '🟡 Needs Help'}
                         </td>
+                        <td style={{ padding: '1rem' }}>
+                            <button 
+                                onClick={(e) => handleDeleteStudent(s.id, e)}
+                                style={{
+                                    background: 'none', 
+                                    border: 'none', 
+                                    cursor: 'pointer', 
+                                    color: '#EF4444',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '4px',
+                                    borderRadius: '4px'
+                                }}
+                                className="hover:bg-red-50"
+                                title="Delete Student"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </td>
                     </tr>
                     ))}
-                    {students.length === 0 && <tr><td colSpan="4" style={{padding: '2rem', textAlign: 'center', color: '#666'}}>No students yet. Invite them!</td></tr>}
+                    {students.length === 0 && <tr><td colSpan="5" style={{padding: '2rem', textAlign: 'center', color: '#666'}}>No students yet. Invite them!</td></tr>}
                 </tbody>
                 </table>
             </div>

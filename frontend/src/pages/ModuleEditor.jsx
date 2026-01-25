@@ -198,6 +198,38 @@ const ModuleEditor = () => {
         setModule(prev => ({ ...prev, exercises: newExercises }));
     };
 
+    // Matching Pairs Helpers
+    const addPair = (exIdx) => {
+        const newExercises = [...module.exercises];
+        const currentOptions = newExercises[exIdx].options;
+        // ensure options is array of objects if switching to matching
+        const newOptionsArray = (Array.isArray(currentOptions) && (currentOptions.length === 0 || typeof currentOptions[0] === 'object'))
+            ? [...currentOptions] 
+            : [];
+            
+        newOptionsArray.push({ left: '', right: '' });
+        newExercises[exIdx].options = newOptionsArray;
+        // Also clear correct_answer as it's not used the same way, or set it to something indicative
+        newExercises[exIdx].correct_answer = 'Pairs';
+        setModule(prev => ({ ...prev, exercises: newExercises }));
+    };
+
+    const updatePair = (exIdx, pairIdx, field, value) => {
+        const newExercises = [...module.exercises];
+        const newOptions = [...newExercises[exIdx].options];
+        newOptions[pairIdx] = { ...newOptions[pairIdx], [field]: value };
+        newExercises[exIdx].options = newOptions;
+        setModule(prev => ({ ...prev, exercises: newExercises }));
+    };
+
+    const removePair = (exIdx, pairIdx) => {
+        const newExercises = [...module.exercises];
+        const newOptions = [...newExercises[exIdx].options];
+        newOptions.splice(pairIdx, 1);
+        newExercises[exIdx].options = newOptions;
+        setModule(prev => ({ ...prev, exercises: newExercises }));
+    };
+
     return (
         <div className="container">
             <div className="flex-between mb-4">
@@ -542,14 +574,27 @@ const ModuleEditor = () => {
                                     <select 
                                         className="input-field"
                                         value={ex.type}
-                                        onChange={(e) => updateExercise(idx, 'type', e.target.value)}
+                                        onChange={(e) => {
+                                             const newType = e.target.value;
+                                             let newOpts = ex.options;
+                                             
+                                             // Reset options if switching type structures
+                                             if (newType === 'matching') newOpts = [{left: '', right: ''}];
+                                             else if (newType === 'fill-gap') newOpts = []; 
+                                             else if (ex.type === 'matching') newOpts = ['Option 1', 'Option 2'];
+                                             
+                                             const newExs = [...module.exercises];
+                                             newExs[idx] = { ...newExs[idx], type: newType, options: newOpts };
+                                             setModule(prev => ({ ...prev, exercises: newExs }));
+                                        }}
                                     >
                                         <option value="multiple-choice">Multiple Choice</option>
-                                        <option value="fill-gap">Fill Gap</option>
+                                        <option value="fill-gap">Fill Gap (Text Input)</option>
+                                        <option value="matching">Matching</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Question Text</label>
+                                    <label className="form-label">Question / Instruction</label>
                                     <input 
                                         className="input-field"
                                         value={ex.question}
@@ -559,40 +604,80 @@ const ModuleEditor = () => {
                                 </div>
                             </div>
 
-                            <div className="form-group bg-gray-50 p-4 rounded border">
-                                <label className="form-label">Options</label>
-                                <div className="form-row mb-2">
-                                    {ex.options && ex.options.map((opt, optIdx) => (
-                                        <div key={optIdx} className="input-group-responsive items-center">
-                                            <div className="badge" style={{background: '#eee', color: '#666', marginRight: '5px'}}>{String.fromCharCode(65 + optIdx)}</div>
-                                            <input 
-                                                className="input-field"
-                                                value={opt}
-                                                onChange={(e) => updateOption(idx, optIdx, e.target.value)}
-                                            />
-                                        </div>
-                                    ))}
+                            {/* Matching Editor */}
+                            {ex.type === 'matching' && (
+                                <div className="form-group bg-gray-50 p-4 rounded border mb-4">
+                                    <label className="form-label">Matching Pairs</label>
+                                    <div className="flex flex-col gap-2 mb-2">
+                                        {Array.isArray(ex.options) && ex.options.map((pair, pIdx) => (
+                                            <div key={pIdx} className="flex gap-2 items-center">
+                                                <div className="flex-1">
+                                                    <input 
+                                                        className="input-field" 
+                                                        placeholder="Left Item"
+                                                        value={pair.left || ''}
+                                                        onChange={(e) => updatePair(idx, pIdx, 'left', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="text-gray-400">↔</div>
+                                                <div className="flex-1">
+                                                     <input 
+                                                        className="input-field" 
+                                                        placeholder="Right Item"
+                                                        value={pair.right || ''}
+                                                        onChange={(e) => updatePair(idx, pIdx, 'right', e.target.value)}
+                                                    />
+                                                </div>
+                                                <button onClick={() => removePair(idx, pIdx)} className="text-red-500 hover:text-red-700 p-1">
+                                                    <Trash2 size={16}/>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => addPair(idx)} className="btn btn-outline btn-sm w-full border-dashed">
+                                        <Plus size={14}/> Add Pair
+                                    </button>
                                 </div>
-                                <button 
-                                    onClick={() => {
-                                        const newOpts = [...(ex.options || []), ""];
-                                        updateExercise(idx, 'options', newOpts);
-                                    }}
-                                    className="btn btn-ghost btn-sm"
-                                >
-                                    + Add Answer Option
-                                </button>
-                            </div>
+                            )}
 
+                            {/* Multiple Choice Options */}
+                            {ex.type === 'multiple-choice' && (
+                                <div className="form-group bg-gray-50 p-4 rounded border">
+                                    <label className="form-label">Options</label>
+                                    <div className="form-row mb-2">
+                                        {ex.options && ex.options.map((opt, optIdx) => (
+                                            <div key={optIdx} className="input-group-responsive items-center">
+                                                <div className="badge" style={{background: '#eee', color: '#666', marginRight: '5px'}}>{String.fromCharCode(65 + optIdx)}</div>
+                                                <input 
+                                                    className="input-field"
+                                                    value={opt}
+                                                    onChange={(e) => updateOption(idx, optIdx, e.target.value)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            const newOpts = [...(ex.options || []), ""];
+                                            updateExercise(idx, 'options', newOpts);
+                                        }}
+                                        className="btn btn-ghost btn-sm"
+                                    >
+                                        + Add Answer Option
+                                    </button>
+                                </div>
+                            )}
+
+                            {ex.type !== 'matching' && (
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Correct Answer</label>
+                                    <label className="form-label">Correct Answer {ex.type === 'fill-gap' && '(Exact Text)'}</label>
                                     <input 
                                         className="input-field"
                                         style={{borderColor: '#10B981'}}
                                         value={ex.correct_answer}
                                         onChange={(e) => updateExercise(idx, 'correct_answer', e.target.value)}
-                                        placeholder="Must match one option exactly"
+                                        placeholder={ex.type === 'fill-gap' ? "Student must type this exactly" : "Must match one option exactly"}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -605,6 +690,7 @@ const ModuleEditor = () => {
                                     />
                                 </div>
                             </div>
+                            )}
                         </div>
                     ))}
                     

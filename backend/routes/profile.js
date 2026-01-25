@@ -69,4 +69,36 @@ router.get('/teacher/dashboard', authenticateToken, async (req, res) => {
     }
 });
 
+// Delete a student (Teacher only)
+router.delete('/teacher/student/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Teachers only' });
+
+    const studentId = req.params.id;
+
+    try {
+        const db = await getDb();
+
+        // Optional: Check if the user is actually a student (safety check)
+        const userToDelete = await db.get('SELECT role FROM users WHERE id = ?', studentId);
+        if (!userToDelete) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (userToDelete.role !== 'student') {
+            return res.status(400).json({ error: 'Cannot delete non-student users via this endpoint' });
+        }
+
+        // Delete related data first
+        await db.run('DELETE FROM progress WHERE user_id = ?', studentId);
+        
+        // Delete the user
+        await db.run('DELETE FROM users WHERE id = ?', studentId);
+
+        res.json({ message: 'Student deleted successfully' });
+
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 module.exports = router;
