@@ -1091,7 +1091,14 @@ const ModuleViewer = () => {
     </div>
   );
 
-  const renderReflection = (questions) => (
+  const renderReflection = (questionsInput) => {
+    const questions = (!questionsInput || questionsInput.length === 0) ? [
+        "Что нового вы узнали в этом уроке?",
+        "Что было самым трудным?",
+        "Что вам понравилось больше всего?"
+    ] : questionsInput;
+
+    return (
     <div className="card">
        <h2 style={{ marginBottom: '1.5rem' }}>🌟 Повторение</h2>
        <p style={{ marginBottom: '2rem', color: '#666' }}>Перед тем, как закончить, давай вспомним, что мы выучили.</p>
@@ -1122,7 +1129,8 @@ const ModuleViewer = () => {
           </button>
        </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="container" style={{ maxWidth: '800px' }}>
