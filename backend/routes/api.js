@@ -333,8 +333,17 @@ router.get('/teacher/progress/:id', authenticateToken, async (req, res) => {
         `, req.params.id);
         
         if (!progress) return res.status(404).json({ error: 'Progress not found' });
+
+        // Retrieve exercises to show correct answers
+        const exercises = await db.all('SELECT * FROM exercises WHERE module_id = ?', progress.module_id);
         
-        res.json(progress);
+        // Parse options if needed, though mostly we need correct_answer or id
+        const parsedExercises = exercises.map(ex => ({
+            ...ex,
+            options: ex.options ? JSON.parse(ex.options) : []
+        }));
+
+        res.json({ ...progress, exerciseData: parsedExercises });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

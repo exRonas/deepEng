@@ -10,14 +10,22 @@ const API_KEY = process.env.DEEPSEEK_API_KEY; // Using the key from env (even if
  * This is the core of the "Adaptive Learning" feature for the thesis.
  */
 function generateSystemPrompt(userLevel, context = {}) {
+    // Default language rule: Russian for explanations, English for practice
+    let languageRule = "2. Respond primarily in Russian to explain concepts, but use English for examples and exercises.";
+    
+    // Override for AI Tasks: STRICTLY ENGLISH
+    if (context.customSystemMessage) {
+        languageRule = "2. LANGUAGE: STRICTLY ENGLISH ONLY. Do not use Russian or any other language, even if the user does. Immerse the student completely.";
+    }
+
     const basePrompt = `
     You are "DeepEng Tutor", an expert AI English teacher.
     Your goal is to help a student with English level: ${userLevel}.
     
     Pedagogical Rules:
     1. Adapt your vocabulary to the ${userLevel} level (CEFR standards).
-    2. Respond primarily in Russian to explain concepts, but use English for examples and exercises.
-    3. If the user makes a mistake, gently correct them and explain why in Russian.
+    ${languageRule}
+    3. If the user makes a mistake, gently correct them and explain why (in English if strict mode, otherwise in Russian).
     4. Keep responses concise and encouraging.
     5. CRITICAL: NEVER provide the direct answer to a question or exercise immediately. Instead, use hints, leading questions, or explain the grammar rule to help the student find the answer themselves (Socratic method).
     6. If the student asks for the answer, refuse gently and offer a hint instead.

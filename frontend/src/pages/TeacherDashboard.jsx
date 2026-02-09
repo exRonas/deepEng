@@ -541,19 +541,60 @@ const TeacherDashboard = () => {
                        </div>
                    )}
             
-                   {/* Exercises Details (If we had question text, we could look it up. For now showing answer keys) */}
+                   {/* Exercises Details */}
                    {selectedProgress.details && (
                        <div>
                            <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb', marginBottom: '1rem'}}>
                                <CheckCircle size={20}/> Exercise Answers
                            </h3>
                            <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem'}}>
-                               {Object.entries(JSON.parse(selectedProgress.details)).map(([qId, ans], i) => (
-                                   <div key={i} style={{padding: '0.75rem', border: '1px solid #eee', borderRadius: '6px', display: 'flex', justifyContent: 'space-between'}}>
-                                       <span>Exercise #{qId}</span>
-                                       <span style={{fontWeight: 'bold'}}>{ans}</span>
+                               {Object.entries(JSON.parse(selectedProgress.details)).map(([qId, ans], i) => {
+                                   const exercise = selectedProgress.exerciseData?.find(e => e.id.toString() === qId.toString());
+                                   let isCorrect = false;
+                                   let correctAnswer = '';
+
+                                   if (exercise) {
+                                       correctAnswer = exercise.correct_answer;
+                                       // Simple correctness check
+                                       if (ans && correctAnswer) {
+                                            isCorrect = ans.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+                                       }
+                                       // If it was matching, it's usually correct if submitted (as logic in viewer suggests), 
+                                       // or we can't easily validate here without more logic. Assuming text match for now.
+                                       if (exercise.type === 'matching') isCorrect = true; // Matching is validated on client before submission
+                                   }
+
+                                   return (
+                                   <div key={i} style={{padding: '0.75rem', border: '1px solid #eee', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '4px', background: isCorrect ? '#F0FDF4' : '#FEF2F2', borderColor: isCorrect ? '#BBF7D0' : '#FECACA'}}>
+                                       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                            <span style={{fontWeight: '600', color: '#374151'}}>
+                                                {exercise ? `Q: ${exercise.question.substring(0, 50)}${exercise.question.length>50?'...':''}` : `Exercise #${qId}`}
+                                            </span>
+                                            {isCorrect ? (
+                                                <span style={{color: '#059669', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold'}}>
+                                                    <CheckCircle size={14}/> Correct
+                                                </span>
+                                            ) : (
+                                                <span style={{color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold'}}>
+                                                    <X size={14}/> Incorrect
+                                                </span>
+                                            )}
+                                       </div>
+                                       
+                                       <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', marginTop: '4px'}}>
+                                           <span style={{color: '#6B7280'}}>Student Answer:</span>
+                                           <span style={{fontWeight: 'bold', color: isCorrect ? '#1F2937' : '#DC2626'}}>{typeof ans === 'object' ? 'Completed' : ans}</span>
+                                       </div>
+                                       
+                                       {!isCorrect && exercise && exercise.correct_answer && (
+                                            <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', background: 'white', padding: '4px 8px', borderRadius: '4px', marginTop: '2px'}}>
+                                                <span style={{color: '#6B7280'}}>Correct Answer:</span>
+                                                <span style={{fontWeight: 'bold', color: '#059669'}}>{exercise.correct_answer}</span>
+                                            </div>
+                                       )}
                                    </div>
-                               ))}
+                                   );
+                               })}
                            </div>
                        </div>
                    )}

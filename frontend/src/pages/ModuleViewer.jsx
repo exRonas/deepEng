@@ -1002,7 +1002,7 @@ const ModuleViewer = () => {
                       // Send a hidden trigger message to AI to start the conversation contextually
                       const res = await axios.post('/api/chat', {
                         messages: [
-                            { role: 'user', content: "Я готов. Поздоровайся со мной и сразу задай ПЕРВЫЙ вопрос по контексту этого задания." }
+                            { role: 'user', content: "I am ready. Greet me and ask the FIRST question related to this task immediately. Please speak only in English." }
                         ],
                         context: {
                            customSystemMessage: task.system_message,

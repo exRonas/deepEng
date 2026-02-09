@@ -125,13 +125,7 @@ const Layout = ({ children }) => {
               </Link>
             )}
 
-            <div style={{ 
-              display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', 
-              color: 'var(--text-muted)', fontWeight: '500', cursor: 'not-allowed', opacity: 0.6 
-            }}>
-              <BookOpen size={20} />
-              Vocabulary (Soon)
-            </div>
+
           </nav>
 
           <div className="logout-container">
