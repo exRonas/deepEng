@@ -10,6 +10,8 @@ const TeacherDashboard = () => {
   const [stats, setStats] = useState({ totalStudents: 0, avgScore: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedModuleToOpen, setSelectedModuleToOpen] = useState('');
+  const [selectedLevelToOpen, setSelectedLevelToOpen] = useState('');
+  const [selectedStudentToOpen, setSelectedStudentToOpen] = useState('');
   const [inviteLink, setInviteLink] = useState('');
 
   // Drill-down State
@@ -140,24 +142,30 @@ const TeacherDashboard = () => {
       if(!selectedModuleToOpen) return;
       try {
           const token = localStorage.getItem('token');
-          await axios.post('/api/assignments', { moduleId: selectedModuleToOpen }, {
+          await axios.post('/api/assignments', {
+              moduleId: selectedModuleToOpen,
+              targetLevel: selectedLevelToOpen || null,
+              studentId: selectedStudentToOpen || null
+          }, {
               headers: { Authorization: `Bearer ${token}` }
           });
           // alert('Module opened successfully for the class!');
           setSelectedModuleToOpen('');
+          setSelectedLevelToOpen('');
+          setSelectedStudentToOpen('');
           refreshAssignments();
       } catch(e) {
           alert('Failed to open module');
       }
   };
 
-  const handleCloseModule = async (moduleId) => {
-      if(!window.confirm("Are you sure you want to close this module? Students will lose access.")) return;
+  const handleCloseModule = async (assignmentId) => {
+      if(!window.confirm("Are you sure you want to close this assignment?")) return;
       try {
           const token = localStorage.getItem('token');
           await axios.delete('/api/assignments', {
               headers: { Authorization: `Bearer ${token}` },
-              data: { moduleId }
+              data: { assignmentId }
           });
           refreshAssignments();
       } catch(e) {
@@ -318,7 +326,7 @@ const TeacherDashboard = () => {
                         <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
                             <BookOpen size={20} color="var(--primary)"/> Open Module (Unlock)
                         </h3>
-                        <p style={{marginBottom: '1rem', color: '#666', fontSize: '0.9rem'}}>Select a module to unlock for all students in your class.</p>
+                        <p style={{marginBottom: '1rem', color: '#666', fontSize: '0.9rem'}}>Open a module for everyone, a level, or one specific student.</p>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <select 
                             className="input-field" 
@@ -327,11 +335,34 @@ const TeacherDashboard = () => {
                             style={{ flex: 1 }}
                             >
                             <option value="">Select Module to Open...</option>
-                            {modules
-                                .filter(m => !assignedModules.some(am => am.module_id === m.id))
-                                .map(m => (
+                            {modules.map(m => (
                                 <option key={m.id} value={m.id}>{m.title} ({m.type} - {m.level})</option>
                             ))}
+                            </select>
+                            <select
+                              className="input-field"
+                              value={selectedLevelToOpen}
+                              onChange={(e) => setSelectedLevelToOpen(e.target.value)}
+                              style={{ width: '170px' }}
+                            >
+                              <option value="">All levels</option>
+                              <option value="A1">A1</option>
+                              <option value="A2">A2</option>
+                              <option value="B1">B1</option>
+                              <option value="B2">B2</option>
+                            </select>
+                            <select
+                              className="input-field"
+                              value={selectedStudentToOpen}
+                              onChange={(e) => setSelectedStudentToOpen(e.target.value)}
+                              style={{ width: '220px' }}
+                            >
+                              <option value="">All students</option>
+                              {students.map(s => (
+                                <option key={s.id} value={s.id}>
+                                  {s.full_name || s.username} ({s.level || 'A1'})
+                                </option>
+                              ))}
                             </select>
                             <button className="btn btn-primary" onClick={handleOpenModule} disabled={!selectedModuleToOpen}>
                                 <Plus size={20} /> Open
@@ -391,10 +422,16 @@ const TeacherDashboard = () => {
                                      }}>
                                          <div>
                                             <div style={{fontWeight: 'bold'}}>{am.title}</div>
-                                            <div style={{fontSize: '0.8rem', color: '#666'}}>{am.type} • {am.level} • Opened on {new Date(am.assigned_at).toLocaleDateString()}</div>
+                                            <div style={{fontSize: '0.8rem', color: '#666'}}>
+                                              {am.type} • {am.level} • Opened on {new Date(am.assigned_at).toLocaleDateString()}
+                                            </div>
+                                            <div style={{fontSize: '0.78rem', color: '#374151'}}>
+                                              Target: {am.target_student_name || am.target_student_username ? (am.target_student_name || am.target_student_username) : 'all students'}
+                                              {am.target_level ? ` • level ${am.target_level}` : ''}
+                                            </div>
                                          </div>
                                          <button 
-                                            onClick={() => handleCloseModule(am.module_id)}
+                                           onClick={() => handleCloseModule(am.id)}
                                             style={{
                                                 background: '#FEF2F2', 
                                                 color: '#EF4444', 

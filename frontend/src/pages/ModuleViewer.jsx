@@ -342,14 +342,18 @@ const ModuleViewer = () => {
   useEffect(() => {
     const fetchModule = async () => {
       try {
-        const res = await axios.get(`/api/modules/${id}`);
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`/api/modules/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setModule(res.data);
       } catch (error) {
         console.error(error);
+        navigate('/');
       }
     };
     fetchModule();
-  }, [id]);
+  }, [id, navigate]);
 
   // Update global context for FloatingChat
   useEffect(() => {

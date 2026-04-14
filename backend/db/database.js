@@ -19,6 +19,14 @@ async function getDb() {
 
 async function initDb() {
     const db = await getDb();
+    
+    const ensureColumn = async (tableName, columnName, definition) => {
+        const columns = await db.all(`PRAGMA table_info(${tableName})`);
+        const exists = columns.some(col => col.name === columnName);
+        if (!exists) {
+            await db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+        }
+    };
 
     // Reset for Thesis Demo (Optional: remove this in production)
     // await db.exec(`DROP TABLE IF EXISTS exercises`);
@@ -87,11 +95,18 @@ async function initDb() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             teacher_id INTEGER,
             module_id INTEGER,
+            student_id INTEGER,
+            target_level TEXT,
             assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(teacher_id) REFERENCES users(id),
-            FOREIGN KEY(module_id) REFERENCES modules(id)
+            FOREIGN KEY(module_id) REFERENCES modules(id),
+            FOREIGN KEY(student_id) REFERENCES users(id)
         );
     `);
+    
+    // Backward-compatible migration for existing DBs
+    await ensureColumn('assignments', 'student_id', 'INTEGER');
+    await ensureColumn('assignments', 'target_level', 'TEXT');
 
     // Dictionary Table
     await db.exec(`
